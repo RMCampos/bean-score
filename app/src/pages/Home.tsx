@@ -106,21 +106,6 @@ export const Home = () => {
     return filteredPlaces;
   }, [filteredPlaces, userLocation]);
 
-  const topRanked = useMemo(() => {
-    const sorted = [...places].sort((a, b) => getPlaceScore(b) - getPlaceScore(a));
-    return sorted.slice(0, 5);
-  }, [places]);
-
-  const isSearching = useMemo(() => {
-    return (
-      filters.searchTerm !== '' ||
-      filters.hasGlutenFree ||
-      filters.hasVegMilk ||
-      filters.hasVeganFood ||
-      filters.hasSugarFree
-    );
-  }, [filters]);
-
   const PlaceCard = ({ place }: { place: CoffeePlace }) => {
     const score = getPlaceScore(place);
     const distance =
@@ -282,21 +267,7 @@ export const Home = () => {
             </Link>
           </div>
         ) : (
-          <>
-            {/* Top Ranked */}
-            {topRanked.length > 0 && !isSearching && (
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold text-white mb-4">Top Ranked</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {topRanked.map((place) => (
-                    <PlaceCard key={place.id} place={place} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Recently Added */}
-            <div>
+            <>
               <h2 className="text-2xl font-bold text-white mb-4">
                 {filters.searchTerm || filters.hasGlutenFree || filters.hasVegMilk || filters.hasVeganFood || filters.hasSugarFree
                   ? 'Search Results'
@@ -311,8 +282,7 @@ export const Home = () => {
                   ))}
                 </div>
               )}
-            </div>
-          </>
+            </>
         )}
       </div>
     </>
