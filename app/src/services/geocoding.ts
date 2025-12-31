@@ -9,18 +9,18 @@ let loadPromise: Promise<any> | null = null;
 const loadGoogleMapsScript = (): Promise<void> => {
   if (loadPromise) return loadPromise;
 
-  loadPromise = new Promise((resolve, reject) => {
+  loadPromise = new Promise<void>((resolve, reject) => {
     // Check if already loaded
     // @ts-expect-error - google is loaded dynamically
     if (typeof google !== 'undefined' && google.maps) {
-      resolve();
+      resolve(undefined);
       return;
     }
 
     // Check if script is already being loaded
     const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
     if (existingScript) {
-      existingScript.addEventListener('load', () => resolve());
+      existingScript.addEventListener('load', () => resolve(undefined));
       existingScript.addEventListener('error', () => reject(new Error('Failed to load Google Maps')));
       return;
     }
@@ -29,7 +29,7 @@ const loadGoogleMapsScript = (): Promise<void> => {
     script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=geocoding`;
     script.async = true;
     script.defer = true;
-    script.onload = () => resolve();
+    script.onload = () => resolve(undefined);
     script.onerror = () => reject(new Error('Failed to load Google Maps script'));
     document.head.appendChild(script);
   });
