@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navigation } from '../components/Navigation';
 import { useAuth } from '../contexts/AuthContext';
-import { mockApi } from '../services/mockApi';
+import { serverApi } from '../services/serverApi';
 
 export const About = () => {
   const { user, logout } = useAuth();
@@ -16,7 +16,7 @@ export const About = () => {
     setDeleting(true);
 
     try {
-      await mockApi.deleteAccount(user.id);
+      await serverApi.deleteAccount();
       logout();
       navigate('/');
     } catch (error) {

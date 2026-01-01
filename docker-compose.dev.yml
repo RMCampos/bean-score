@@ -68,7 +68,7 @@ services:
   #       condition: service_healthy
 
   postgres:
-    image: postgres:15-bookworm
+    image: postgres:15.8-bookworm
     container_name: beanscore-postgres
     environment:
       POSTGRES_DB: beanscore
@@ -87,7 +87,7 @@ services:
 
   db-init:
     container_name: db-init
-    image: postgres:15-bookworm
+    image: postgres:15.8-bookworm
     environment:
       PGPASSWORD: beanscore123
     volumes:

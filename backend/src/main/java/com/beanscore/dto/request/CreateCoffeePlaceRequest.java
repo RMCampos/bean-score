@@ -1,7 +1,9 @@
 package com.beanscore.dto.request;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.math.BigDecimal;
 
+@RegisterForReflection
 public record CreateCoffeePlaceRequest(
     String name,
     String address,

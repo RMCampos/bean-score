@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15.8-bookworm
+    container_name: beanscore-postgres
+    environment:
+      POSTGRES_DB: beanscore
+      POSTGRES_USER: beanscore
+      POSTGRES_PASSWORD: beanscore123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U beanscore"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - beanscore-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: beanscore-backend
+    ports:
+      - "8080:8080"
+    environment:
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgres:5432/beanscore
+      QUARKUS_DATASOURCE_USERNAME: beanscore
+      QUARKUS_DATASOURCE_PASSWORD: beanscore123
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - beanscore-network
+
+  frontend:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: beanscore-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - beanscore-network
+
+volumes:
+  postgres_data:
+
+networks:
+  beanscore-network:
+    driver: bridge

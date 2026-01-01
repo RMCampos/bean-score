@@ -1,19 +1,18 @@
-import type { User, CoffeePlace, CoffeePlaceFormData } from '../types';
+import type { CoffeePlace, CoffeePlaceFormData } from '../types';
 
 // Mock storage keys
-const USERS_KEY = 'bean_score_users';
+// const USERS_KEY = 'bean_score_users';
 const PLACES_KEY = 'bean_score_places';
-const TOKEN_KEY = 'bean_score_token';
 
 // Helper functions for localStorage
-const getUsers = (): User[] => {
-  const users = localStorage.getItem(USERS_KEY);
-  return users ? JSON.parse(users) : [];
-};
+// const getUsers = (): User[] => {
+//   const users = localStorage.getItem(USERS_KEY);
+//   return users ? JSON.parse(users) : [];
+// };
 
-const saveUsers = (users: User[]) => {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-};
+// const saveUsers = (users: User[]) => {
+//   localStorage.setItem(USERS_KEY, JSON.stringify(users));
+// };
 
 const getPlaces = (): CoffeePlace[] => {
   const places = localStorage.getItem(PLACES_KEY);
