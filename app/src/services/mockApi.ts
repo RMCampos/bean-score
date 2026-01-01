@@ -34,78 +34,78 @@ const savePlaces = (places: CoffeePlace[]) => {
 
 // Mock API functions
 export const mockApi = {
-  // Auth
-  login: async (email: string, _password: string): Promise<{ user: User; token: string }> => {
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+  // // Auth
+  // login: async (email: string, _password: string): Promise<{ user: User; token: string }> => {
+  //   await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
 
-    const users = getUsers();
-    const user = users.find(u => u.email === email);
+  //   const users = getUsers();
+  //   const user = users.find(u => u.email === email);
 
-    if (!user || _password !== 'password') { // Mock password check
-      throw new Error('Invalid credentials');
-    }
+  //   if (!user || _password !== 'password') { // Mock password check
+  //     throw new Error('Invalid credentials');
+  //   }
 
-    const token = `mock_token_${user.id}`;
-    localStorage.setItem(TOKEN_KEY, token);
+  //   const token = `mock_token_${user.id}`;
+  //   localStorage.setItem(TOKEN_KEY, token);
 
-    return { user, token };
-  },
+  //   return { user, token };
+  // },
 
-  register: async (email: string, _password: string, name: string): Promise<{ user: User; token: string }> => {
-    await new Promise(resolve => setTimeout(resolve, 500));
+  // register: async (email: string, _password: string, name: string): Promise<{ user: User; token: string }> => {
+  //   await new Promise(resolve => setTimeout(resolve, 500));
 
-    const users = getUsers();
+  //   const users = getUsers();
 
-    if (users.find(u => u.email === email)) {
-      throw new Error('Email already exists');
-    }
+  //   if (users.find(u => u.email === email)) {
+  //     throw new Error('Email already exists');
+  //   }
 
-    const newUser: User = {
-      id: `user_${Date.now()}`,
-      email,
-      name,
-    };
+  //   const newUser: User = {
+  //     id: `user_${Date.now()}`,
+  //     email,
+  //     name,
+  //   };
 
-    users.push(newUser);
-    saveUsers(users);
+  //   users.push(newUser);
+  //   saveUsers(users);
 
-    const token = `mock_token_${newUser.id}`;
-    localStorage.setItem(TOKEN_KEY, token);
+  //   const token = `mock_token_${newUser.id}`;
+  //   localStorage.setItem(TOKEN_KEY, token);
 
-    return { user: newUser, token };
-  },
+  //   return { user: newUser, token };
+  // },
 
-  getCurrentUser: async (): Promise<User | null> => {
-    await new Promise(resolve => setTimeout(resolve, 200));
+  // getCurrentUser: async (): Promise<User | null> => {
+  //   await new Promise(resolve => setTimeout(resolve, 200));
 
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) return null;
+  //   const token = localStorage.getItem(TOKEN_KEY);
+  //   if (!token) return null;
 
-    const userId = token.replace('mock_token_', '');
-    const users = getUsers();
-    return users.find(u => u.id === userId) || null;
-  },
+  //   const userId = token.replace('mock_token_', '');
+  //   const users = getUsers();
+  //   return users.find(u => u.id === userId) || null;
+  // },
 
-  logout: () => {
-    localStorage.removeItem(TOKEN_KEY);
-  },
+  // logout: () => {
+  //   localStorage.removeItem(TOKEN_KEY);
+  // },
 
-  deleteAccount: async (userId: string): Promise<void> => {
-    await new Promise(resolve => setTimeout(resolve, 500));
+  // deleteAccount: async (userId: string): Promise<void> => {
+  //   await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Remove user
-    const users = getUsers();
-    const updatedUsers = users.filter(u => u.id !== userId);
-    saveUsers(updatedUsers);
+  //   // Remove user
+  //   const users = getUsers();
+  //   const updatedUsers = users.filter(u => u.id !== userId);
+  //   saveUsers(updatedUsers);
 
-    // Remove user's places
-    const places = getPlaces();
-    const updatedPlaces = places.filter(p => p.userId !== userId);
-    savePlaces(updatedPlaces);
+  //   // Remove user's places
+  //   const places = getPlaces();
+  //   const updatedPlaces = places.filter(p => p.userId !== userId);
+  //   savePlaces(updatedPlaces);
 
-    // Clear token
-    localStorage.removeItem(TOKEN_KEY);
-  },
+  //   // Clear token
+  //   localStorage.removeItem(TOKEN_KEY);
+  // },
 
   // Coffee Places
   getPlaces: async (userId: string): Promise<CoffeePlace[]> => {

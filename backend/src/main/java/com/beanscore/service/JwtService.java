@@ -17,6 +17,7 @@ public class JwtService {
         .subject(user.id.toString())
         .claim("email", user.email)
         .claim("name", user.name)
+        .groups("user")
         .expiresIn(604800) // 7 days
         .sign();
   }

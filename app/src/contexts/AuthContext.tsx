@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { User, AuthContextType } from '../types';
-import { mockApi } from '../services/mockApi';
+import { serverApi } from '../services/serverApi';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -10,10 +10,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already logged in
     const checkAuth = async () => {
       try {
-        const currentUser = await mockApi.getCurrentUser();
+        const currentUser = await serverApi.getCurrentUser();
         setUser(currentUser);
       } catch (error) {
         console.error('Auth check failed:', error);
@@ -26,17 +25,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const { user } = await mockApi.login(email, password);
+    const { user } = await serverApi.login(email, password);
     setUser(user);
   };
 
   const register = async (email: string, password: string, name: string) => {
-    const { user } = await mockApi.register(email, password, name);
+    const { user } = await serverApi.register(email, password, name);
     setUser(user);
   };
 
   const logout = () => {
-    mockApi.logout();
+    serverApi.logout();
     setUser(null);
   };
 
