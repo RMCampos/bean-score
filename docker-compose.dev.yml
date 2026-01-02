@@ -12,6 +12,7 @@ services:
     environment:
       VITE_BACKEND_SERVER: http://localhost:8080
       VITE_BUILD: nightly
+      VITE_DEBUG_MAPS: true
     volumes: 
       - "./app:/app"
     working_dir: /app
@@ -22,36 +23,32 @@ services:
       retries: 3
       start_period: 10s
 
-  # backend:
-  #   container_name: backend
-  #   depends_on:
-  #     tasknote-db:
-  #       condition: service_started
-  #   environment:
-  #     POSTGRES_DB: tasknote
-  #     POSTGRES_HOST: tasknote-db
-  #     POSTGRES_USER: tasknoteuser
-  #     POSTGRES_PASSWORD: default
-  #     POSTGRES_PORT: 5432
-  #     CORS_ALLOWED_ORIGINS: http://localhost:5000, http://tasknote-web:5000
-  #     SERVER_SERVLET_CONTEXT_PATH: /
-  #     TARGET_ENV: development
-  #     SECURITY_KEY: this-is-a-very-long-security-key-for-dev
-  #     MAILGUN_APIKEY: invalid-api-key-only-placeholder
-  #   ports:
-  #     - "8585:8585"
-  #     - "5005:5005"
-  #   image: maven:3.9.9-eclipse-temurin-17
-  #   entrypoint: './mvnw -ntp spring-boot:run -Dspring-boot.run.jvmArguments="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=*:5005" -Dmaven.plugin.validation=VERBOSE'
-  #   working_dir: /app
-  #   volumes:
-  #     - "./server:/app"
-  #   healthcheck:
-  #     test: curl -f http://localhost:8585/actuator/health | grep '"status":"UP"'
-  #     interval: 1m30s
-  #     timeout: 15s
-  #     retries: 3
-  #     start_period: 10s
+  backend:
+    container_name: beanscore-backend
+    depends_on:
+      postgres:
+        condition: service_started
+    environment:
+      POSTGRES_DB: beanscore
+      POSTGRES_HOST: beanscore-postgres
+      POSTGRES_USER: beanscore
+      POSTGRES_PASSWORD: beanscore123
+      POSTGRES_PORT: 5432
+      CORS_ALLOWED_ORIGINS: http://localhost:5173
+    ports:
+      - "8080:8080"
+      - "5005:5005"
+    image: maven:3.9.12-eclipse-temurin-21
+    entrypoint: 'mvn quarkus:dev -Dquarkus.http.host=0.0.0.0'
+    working_dir: /app
+    volumes:
+      - "./backend:/app"
+    healthcheck:
+      test: curl -f http://localhost:8080/q/health | grep '"status":"UP"'
+      interval: 1m30s
+      timeout: 15s
+      retries: 3
+      start_period: 10s
 
   # schemaspy:
   #   container_name: schemaspy
@@ -108,16 +105,10 @@ services:
         condition: service_healthy
     restart: on-failure
 
-  # pgadmin:
-  #   image: dpage/pgadmin4:latest
-  #   container_name: beanscore-pgadmin
-  #   environment:
-  #     PGADMIN_DEFAULT_EMAIL: admin@beanscore.com
-  #     PGADMIN_DEFAULT_PASSWORD: admin
-  #   ports:
-  #     - "5050:80"
-  #   depends_on:
-  #     - postgres
-
 volumes:
   postgres_data:
+
+networks:
+  beanscore-network:
+    driver: bridge
+

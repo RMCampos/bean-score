@@ -4,6 +4,8 @@ import com.beanscore.dto.request.CreateCoffeePlaceRequest;
 import com.beanscore.dto.request.UpdateCoffeePlaceRequest;
 import com.beanscore.dto.response.CoffeePlaceResponse;
 import com.beanscore.service.CoffeePlaceService;
+
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
@@ -27,6 +29,7 @@ public class CoffeePlaceResource {
   @Inject CoffeePlaceService coffeePlaceService;
 
   @GET
+  @RolesAllowed("user")
   public Response getAllCoffeePlaces() {
     List<CoffeePlaceResponse> coffeePlaces = coffeePlaceService.getAll();
     return Response.ok(coffeePlaces).build();
@@ -34,6 +37,7 @@ public class CoffeePlaceResource {
 
   @GET
   @Path("/{id}")
+  @RolesAllowed("user")
   public Response getCoffeePlaceById(@PathParam("id") UUID id) {
     CoffeePlaceResponse coffeePlace = coffeePlaceService.getById(id);
     return Response.ok(coffeePlace).build();
@@ -47,6 +51,7 @@ public class CoffeePlaceResource {
 
   @PUT
   @Path("/{id}")
+  @RolesAllowed("user")
   public Response updateCoffeePlace(
       @PathParam("id") UUID id, @Valid UpdateCoffeePlaceRequest request) {
     CoffeePlaceResponse coffeePlace = coffeePlaceService.update(id, request);
@@ -55,6 +60,7 @@ public class CoffeePlaceResource {
 
   @DELETE
   @Path("/{id}")
+  @RolesAllowed("user")
   public Response deleteCoffeePlace(@PathParam("id") UUID id) {
     coffeePlaceService.delete(id);
     return Response.noContent().build();

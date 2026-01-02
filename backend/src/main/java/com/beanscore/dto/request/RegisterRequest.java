@@ -7,4 +7,4 @@ import jakarta.validation.constraints.Size;
 
 @RegisterForReflection
 public record RegisterRequest(
-    @NotNull String name, @NotNull @Email String email, @NotNull @Size(min = 6) String password) {}
+    @NotNull String name, @NotNull @Email String email, @NotNull @Size(min = 8) String password) {}

@@ -23,8 +23,8 @@ CREATE TABLE IF NOT EXISTS coffee_places (
     has_veg_milk BOOLEAN DEFAULT FALSE,
     has_vegan_food BOOLEAN DEFAULT FALSE,
     has_sugar_free BOOLEAN DEFAULT FALSE,
-    latitude DOUBLE PRECISION,
-    longitude DOUBLE PRECISION,
+    latitude DECIMAL(11, 8),
+    longitude DECIMAL(11, 8),
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );

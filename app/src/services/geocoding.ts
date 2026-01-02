@@ -1,5 +1,13 @@
 // You'll need to replace this with an actual API key when deploying
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY_HERE';
+const DEBUG_MAPS = import.meta.env.VITE_DEBUG_MAPS === 'true';
+
+// Debug logger
+const debugLog = (...args: unknown[]) => {
+  if (DEBUG_MAPS) {
+    console.log('[MAPS DEBUG]', ...args);
+  }
+};
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let geocoder: any = null;
@@ -94,22 +102,47 @@ export const geocodeAddress = async (
 };
 
 export const getCurrentPosition = (): Promise<GeolocationPosition | null> => {
+  debugLog('🎯 getCurrentPosition called');
+
   return new Promise((resolve) => {
     if (!navigator.geolocation) {
+      debugLog('❌ Geolocation not supported by browser');
       resolve(null);
       return;
     }
 
+    debugLog('📍 Requesting geolocation with options:', {
+      enableHighAccuracy: false,
+      timeout: 30000,
+      maximumAge: 300000,
+    });
+
     navigator.geolocation.getCurrentPosition(
-      (position) => resolve(position),
+      (position) => {
+        debugLog('✅ Geolocation success:', {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        });
+        resolve(position);
+      },
       (error) => {
-        console.error('Geolocation error:', error);
+        debugLog('❌ Geolocation error:', {
+          code: error.code,
+          message: error.message,
+          codes: {
+            1: 'PERMISSION_DENIED',
+            2: 'POSITION_UNAVAILABLE',
+            3: 'TIMEOUT',
+          }[error.code],
+        });
+        console.error('Geolocation error:', error.code, error.message);
         resolve(null);
       },
       {
-        enableHighAccuracy: true,
-        timeout: 30000,        // 30 seconds (increased from 10)
-        maximumAge: 300000,    // Accept cached position up to 5 minutes old
+        enableHighAccuracy: false,  // Allow network-based location (not just GPS)
+        timeout: 30000,             // 30 seconds
+        maximumAge: 300000,         // Accept cached position up to 5 minutes old
       }
     );
   });

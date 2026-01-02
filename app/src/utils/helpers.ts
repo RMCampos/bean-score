@@ -1,5 +1,13 @@
 import type { CoffeePlace } from '../types';
 
+const DEBUG_MAPS = import.meta.env.VITE_DEBUG_MAPS === 'true';
+
+const debugLog = (...args: unknown[]) => {
+  if (DEBUG_MAPS) {
+    console.log('[MAPS DEBUG]', ...args);
+  }
+};
+
 export const calculateScore = (coffeeQuality: number, ambient: number): number => {
   return (coffeeQuality + ambient) / 2;
 };
@@ -14,6 +22,11 @@ export const calculateDistance = (
   lat2: number,
   lon2: number
 ): number => {
+  debugLog('📏 Calculating distance:', {
+    from: { lat: lat1, lon: lon1 },
+    to: { lat: lat2, lon: lon2 },
+  });
+
   // Haversine formula
   const R = 6371; // Radius of the Earth in km
   const dLat = toRad(lat2 - lat1);
@@ -28,6 +41,8 @@ export const calculateDistance = (
 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const distance = R * c;
+
+  debugLog('✅ Distance calculated:', distance.toFixed(2) + 'km');
 
   return distance; // Distance in km
 };

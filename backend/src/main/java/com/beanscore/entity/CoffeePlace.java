@@ -48,7 +48,10 @@ public class CoffeePlace extends PanacheEntityBase {
   @Column(name = "has_sugar_free")
   public Boolean hasSugarFree = false;
 
+  @Column(precision = 11, scale = 8)
   public BigDecimal latitude;
+
+  @Column(precision = 11, scale = 8)
   public BigDecimal longitude;
 
   @Column(name = "created_at", nullable = false, updatable = false)

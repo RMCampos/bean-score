@@ -70,25 +70,35 @@ export const AddEditPlace = () => {
     try {
       if (id) {
         // Update existing place
-        await serverApi.updatePlace(id, formData);
-      } else {
-        // Create new place and geocode address
-        const newPlace = await serverApi.createPlace(formData);
-
         // Try to geocode the address if online
+        let updatedFormData = { ...formData };
         if (isOnline()) {
           const coords = await geocodeAddress(formData.address);
           if (coords) {
-            // Update the place with coordinates
-            const places = JSON.parse(localStorage.getItem('bean_score_places') || '[]');
-            const placeIndex = places.findIndex((p: any) => p.id === newPlace.id);
-            if (placeIndex !== -1) {
-              places[placeIndex].latitude = coords.lat;
-              places[placeIndex].longitude = coords.lng;
-              localStorage.setItem('bean_score_places', JSON.stringify(places));
-            }
+            updatedFormData = {
+              ...formData,
+              latitude: coords.lat,
+              longitude: coords.lng,
+            };
           }
         }
+        await serverApi.updatePlace(id, updatedFormData);
+      } else {
+        // Geocode address BEFORE creating the place
+        let newFormData = { ...formData };
+        if (isOnline()) {
+          const coords = await geocodeAddress(formData.address);
+          if (coords) {
+            newFormData = {
+              ...formData,
+              latitude: coords.lat,
+              longitude: coords.lng,
+            };
+          }
+        }
+
+        // Create new place with coordinates
+        await serverApi.createPlace(newFormData);
       }
 
       navigate('/home');

@@ -8,6 +8,14 @@ import { getCurrentPosition } from '../services/geocoding';
 import type { CoffeePlace, SearchFilters } from '../types';
 import { getPlaceScore, calculateDistance, formatDistance, openAddressInMaps, isOnline } from '../utils/helpers';
 
+const DEBUG_MAPS = import.meta.env.VITE_DEBUG_MAPS === 'true';
+
+const debugLog = (...args: unknown[]) => {
+  if (DEBUG_MAPS) {
+    console.log('[MAPS DEBUG]', ...args);
+  }
+};
+
 export const Home = () => {
   const { user } = useAuth();
   const [places, setPlaces] = useState<CoffeePlace[]>([]);
@@ -40,14 +48,24 @@ export const Home = () => {
   };
 
   const requestLocation = async () => {
-    if (!isOnline()) return;
+    debugLog('🌍 requestLocation called');
+    debugLog('Online status:', isOnline());
+
+    if (!isOnline()) {
+      debugLog('⚠️ Offline - skipping geolocation request');
+      return;
+    }
 
     const position = await getCurrentPosition();
     if (position) {
-      setUserLocation({
+      const loc = {
         lat: position.coords.latitude,
         lng: position.coords.longitude,
-      });
+      };
+      debugLog('📍 Setting userLocation:', loc);
+      setUserLocation(loc);
+    } else {
+      debugLog('❌ No position returned from getCurrentPosition');
     }
   };
 
@@ -73,10 +91,21 @@ export const Home = () => {
   }, [places, filters]);
 
   const sortedPlaces = useMemo(() => {
+    debugLog('🔄 sortedPlaces recalculating');
+    debugLog('userLocation:', userLocation);
+    debugLog('isOnline:', isOnline());
+    debugLog('filteredPlaces count:', filteredPlaces.length);
+
     // Only sort by distance when online and location is available
     // Otherwise, keep natural order (recently added)
     if (userLocation && isOnline()) {
+      debugLog('✅ Conditions met for distance sorting');
       const sorted = [...filteredPlaces];
+
+      // Log places with/without coordinates
+      const placesWithCoords = sorted.filter(p => p.latitude && p.longitude);
+      const placesWithoutCoords = sorted.filter(p => !p.latitude || !p.longitude);
+      debugLog(`Places with coordinates: ${placesWithCoords.length}, without: ${placesWithoutCoords.length}`);
 
       sorted.sort((a, b) => {
         // Only sort if both places have coordinates
@@ -102,16 +131,28 @@ export const Home = () => {
       return sorted;
     }
 
+    debugLog('⚠️ Not sorting by distance - returning natural order');
     // When offline or no location, return unsorted (natural order)
     return filteredPlaces;
   }, [filteredPlaces, userLocation]);
 
   const PlaceCard = ({ place }: { place: CoffeePlace }) => {
     const score = getPlaceScore(place);
+
+    debugLog('🏪 Rendering PlaceCard:', {
+      name: place.name,
+      hasCoordinates: !!(place.latitude && place.longitude),
+      coordinates: place.latitude && place.longitude ? { lat: place.latitude, lng: place.longitude } : null,
+      userLocation,
+      isOnline: isOnline(),
+    });
+
     const distance =
       userLocation && isOnline() && place.latitude && place.longitude
         ? calculateDistance(userLocation.lat, userLocation.lng, place.latitude, place.longitude)
         : null;
+
+    debugLog('📊 Distance result for', place.name, ':', distance ? distance.toFixed(2) + 'km' : 'null');
 
     return (
       <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-emerald-500 transition-colors">

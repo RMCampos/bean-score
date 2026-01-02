@@ -40,6 +40,8 @@ export interface CoffeePlaceFormData {
   hasVegMilk: boolean;
   hasVeganFood: boolean;
   hasSugarFree: boolean;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface SearchFilters {
