@@ -1,0 +1,23 @@
+meta {
+  name: Coffee Delete
+  type: http
+  seq: 11
+}
+
+delete {
+  url: http://localhost:8080/coffee-places/:id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: 88952216-d6ed-4d35-8133-d803fdcb5c1b
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+settings {
+  encodeUrl: true
+}

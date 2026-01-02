@@ -1,0 +1,19 @@
+meta {
+  name: User delete
+  type: http
+  seq: 6
+}
+
+delete {
+  url: http://localhost:8080/user
+  body: json
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+settings {
+  encodeUrl: true
+}

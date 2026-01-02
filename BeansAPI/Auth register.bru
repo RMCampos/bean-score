@@ -1,0 +1,27 @@
+meta {
+  name: Auth register
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://localhost:8080/auth/register
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Bruno Client",
+    "email": "bruno-client@domain.com",
+    "password": "Test@123"
+  }
+}
+
+script:post-response {
+  bru.setVar("token", res.getBody().token)
+}
+
+settings {
+  encodeUrl: true
+}

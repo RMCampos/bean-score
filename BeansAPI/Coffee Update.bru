@@ -1,0 +1,39 @@
+meta {
+  name: Coffee Update
+  type: http
+  seq: 10
+}
+
+put {
+  url: http://localhost:8080/coffee-places/:id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: 88952216-d6ed-4d35-8133-d803fdcb5c1b
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "name": "Noel",
+    "address": "Street",
+    "instagramHandle": "test",
+    "coffeeQuality": 5,
+    "ambient": 5,
+    "hasGlutenFree": false,
+    "hasVegMilk": false,
+    "hasVeganFood": false,
+    "hasSugarFree": false,
+    "latitude": -123.34,
+    "longitude": 55.12
+  }
+}
+
+settings {
+  encodeUrl: true
+}

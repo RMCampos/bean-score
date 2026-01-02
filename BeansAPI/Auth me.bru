@@ -1,0 +1,19 @@
+meta {
+  name: Auth me
+  type: http
+  seq: 5
+}
+
+get {
+  url: http://localhost:8080/auth/me
+  body: json
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+settings {
+  encodeUrl: true
+}

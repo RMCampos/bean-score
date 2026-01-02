@@ -1,0 +1,26 @@
+meta {
+  name: Auth login
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://localhost:8080/auth/login
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "email": "bruno-client@domain.com",
+    "password": "Test@123"
+  }
+}
+
+script:post-response {
+  bru.setVar("token", res.getBody().token)
+}
+
+settings {
+  encodeUrl: true
+}

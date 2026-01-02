@@ -1,0 +1,35 @@
+meta {
+  name: Coffee Create
+  type: http
+  seq: 9
+}
+
+post {
+  url: http://localhost:8080/coffee-places
+  body: json
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "name": "Noel",
+    "address": "Street",
+    "instagramHandle": "test",
+    "coffeeQuality": 5,
+    "ambient": 5,
+    "hasGlutenFree": false,
+    "hasVegMilk": false,
+    "hasVeganFood": false,
+    "hasSugarFree": false,
+    "latitude": -123.34,
+    "longitude": 55.12
+  }
+}
+
+settings {
+  encodeUrl: true
+}
