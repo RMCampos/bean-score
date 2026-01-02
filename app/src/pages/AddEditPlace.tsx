@@ -3,15 +3,13 @@ import type { FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Navigation } from '../components/Navigation';
 import { StarRating } from '../components/StarRating';
-import { useAuth } from '../contexts/AuthContext';
-import { mockApi } from '../services/mockApi';
+import { serverApi } from '../services/serverApi';
 import { geocodeAddress } from '../services/geocoding';
 import type { CoffeePlaceFormData } from '../types';
 import { isOnline } from '../utils/helpers';
 
 export const AddEditPlace = () => {
   const { id } = useParams();
-  const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -38,7 +36,7 @@ export const AddEditPlace = () => {
     if (!id) return;
 
     try {
-      const place = await mockApi.getPlace(id);
+      const place = await serverApi.getPlace(id);
       if (place) {
         setFormData({
           name: place.name,
@@ -72,10 +70,10 @@ export const AddEditPlace = () => {
     try {
       if (id) {
         // Update existing place
-        await mockApi.updatePlace(id, formData);
+        await serverApi.updatePlace(id, formData);
       } else {
         // Create new place and geocode address
-        const newPlace = await mockApi.createPlace(user!.id, formData);
+        const newPlace = await serverApi.createPlace(formData);
 
         // Try to geocode the address if online
         if (isOnline()) {
@@ -107,7 +105,7 @@ export const AddEditPlace = () => {
     setDeleting(true);
 
     try {
-      await mockApi.deletePlace(id);
+      await serverApi.deletePlace(id);
       navigate('/home');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete place');

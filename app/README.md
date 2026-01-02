@@ -128,7 +128,7 @@ src/
 │   └── Register.tsx
 ├── services/         # API and service functions
 │   ├── geocoding.ts
-│   └── mockApi.ts
+│   └── serverApi.ts
 ├── types/            # TypeScript type definitions
 │   └── index.ts
 ├── utils/            # Utility functions
@@ -139,11 +139,8 @@ src/
 
 ## API Integration
 
-The app is currently using mock data stored in localStorage. To integrate with a real backend:
+<!-- add information about the API with Quarkus -->
 
-1. Replace the mock API calls in `src/services/mockApi.ts` with real API calls
-2. Update the authentication flow to use JWT tokens from your backend
-3. Modify the data storage to use the backend instead of localStorage
 
 ## Icons
 

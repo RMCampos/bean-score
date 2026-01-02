@@ -7,11 +7,11 @@ services:
     ports: 
       - "5173:5173"
     entrypoint: sh -c "npm i --no-update-notifier && npm run dev -- --host"
+    env_file:
+      - ./app/.env
     environment:
       VITE_BACKEND_SERVER: http://localhost:8080
       VITE_BUILD: nightly
-    env_file:
-      - ./app/.env
     volumes: 
       - "./app:/app"
     working_dir: /app

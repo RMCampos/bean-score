@@ -11,10 +11,13 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class CoffeePlaceService {
+
+  private static final Logger logger = Logger.getLogger(CoffeePlaceService.class.getName());
 
   @Inject CoffeePlaceRepository coffeePlaceRepository;
 
@@ -46,7 +49,11 @@ public class CoffeePlaceService {
   public List<CoffeePlaceResponse> getAll() {
     UUID currentUserId = jwtService.getCurrentUserId();
 
+    logger.fine("Getting all coffee places for user id: " + currentUserId);
+
     List<CoffeePlace> coffeePlaces = coffeePlaceRepository.findByUserId(currentUserId);
+
+    logger.fine("Found " + coffeePlaces.size() + " coffee places for user id: " + currentUserId);
 
     return coffeePlaces.stream().map(this::mapToCoffeePlaceResponse).collect(Collectors.toList());
   }
@@ -54,10 +61,14 @@ public class CoffeePlaceService {
   public CoffeePlaceResponse getById(UUID id) {
     UUID currentUserId = jwtService.getCurrentUserId();
 
+    logger.fine("Getting coffee place by id: " + id + " for user id: " + currentUserId);
+
     CoffeePlace coffeePlace =
         coffeePlaceRepository
             .findByIdAndUserId(id, currentUserId)
             .orElseThrow(() -> new NotFoundException("Coffee place not found"));
+
+    logger.fine("Found coffee place with id: " + id + " for user id: " + currentUserId);
 
     return mapToCoffeePlaceResponse(coffeePlace);
   }
@@ -66,10 +77,14 @@ public class CoffeePlaceService {
   public CoffeePlaceResponse update(UUID id, UpdateCoffeePlaceRequest request) {
     UUID currentUserId = jwtService.getCurrentUserId();
 
+    logger.fine("Updating coffee place with id: " + id + " for user id: " + currentUserId);
+
     CoffeePlace coffeePlace =
         coffeePlaceRepository
             .findByIdAndUserId(id, currentUserId)
             .orElseThrow(() -> new NotFoundException("Coffee place not found"));
+
+    logger.fine("Found coffee place with id: " + id + " for update");
 
     coffeePlace.name = request.name();
     coffeePlace.address = request.address();
@@ -85,6 +100,8 @@ public class CoffeePlaceService {
 
     coffeePlaceRepository.persist(coffeePlace);
 
+    logger.fine("Updated coffee place with id: " + coffeePlace.id + " for user id: " + currentUserId);
+
     return mapToCoffeePlaceResponse(coffeePlace);
   }
 
@@ -92,11 +109,15 @@ public class CoffeePlaceService {
   public void delete(UUID id) {
     UUID currentUserId = jwtService.getCurrentUserId();
 
+    logger.fine("Deleting coffee place with id: " + id + " for user id: " + currentUserId);
+
     long deletedCount = coffeePlaceRepository.deleteByIdAndUserId(id, currentUserId);
 
     if (deletedCount == 0) {
+      logger.warning("Coffee place with id: " + id + " not found for deletion");
       throw new NotFoundException("Coffee place not found");
     }
+    logger.fine("Deleted coffee place with id: " + id + " for user id: " + currentUserId);
   }
 
   private CoffeePlaceResponse mapToCoffeePlaceResponse(CoffeePlace coffeePlace) {

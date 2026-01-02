@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Navigation } from '../components/Navigation';
 import { StarRating } from '../components/StarRating';
 import { useAuth } from '../contexts/AuthContext';
-import { mockApi } from '../services/mockApi';
+import { serverApi } from '../services/serverApi';
 import { getCurrentPosition } from '../services/geocoding';
 import type { CoffeePlace, SearchFilters } from '../types';
 import { getPlaceScore, calculateDistance, formatDistance, openAddressInMaps, isOnline } from '../utils/helpers';
@@ -30,7 +30,7 @@ export const Home = () => {
     if (!user) return;
 
     try {
-      const data = await mockApi.getPlaces(user.id);
+      const data = await serverApi.getPlaces();
       setPlaces(data);
     } catch (error) {
       console.error('Failed to load places:', error);

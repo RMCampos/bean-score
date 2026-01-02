@@ -21,4 +21,8 @@ public class CoffeePlaceRepository implements PanacheRepositoryBase<CoffeePlace,
   public long deleteByIdAndUserId(UUID id, UUID userId) {
     return delete("id = ?1 and userId = ?2", id, userId);
   }
+
+  public long deleteByUserId(UUID userId) {
+    return delete("userId", userId);
+  }
 }

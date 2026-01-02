@@ -5,11 +5,5 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @RegisterForReflection
-public class UserResponse {
-
-  public UUID id;
-  public String email;
-  public String name;
-  public LocalDateTime createdAt;
-  public LocalDateTime updatedAt;
-}
+public record UserResponse(
+    UUID id, String email, String name, LocalDateTime createdAt, LocalDateTime updatedAt) {}
