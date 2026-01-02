@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Navigation } from '../components/Navigation';
 import { StarRating } from '../components/StarRating';
@@ -29,12 +29,7 @@ export const Home = () => {
     hasSugarFree: false,
   });
 
-  useEffect(() => {
-    loadPlaces();
-    requestLocation();
-  }, [user]);
-
-  const loadPlaces = async () => {
+  const loadPlaces = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -45,7 +40,12 @@ export const Home = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    loadPlaces();
+    requestLocation();
+  }, [user, loadPlaces]);
 
   const requestLocation = async () => {
     debugLog('🌍 requestLocation called');
