@@ -10,8 +10,6 @@ services:
       POSTGRES_PASSWORD: beanscore123
     ports:
       - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U beanscore"]
       interval: 10s
@@ -19,6 +17,29 @@ services:
       retries: 5
     networks:
       - beanscore-network
+
+  db-init:
+    container_name: db-init
+    image: postgres:15.8-bookworm
+    environment:
+      PGPASSWORD: beanscore123
+    volumes:
+      - "./backend/src/main/docker/init.sql:/init.sql:ro"
+    command: >
+      bash -c "
+        echo 'Waiting for database to be ready...' &&
+        until pg_isready -h beanscore-postgres -U beanscore; do
+          echo 'Database not ready, waiting...';
+          sleep 2;
+        done &&
+        echo 'Database ready, running init script...' &&
+        psql -h beanscore-postgres -U beanscore -d beanscore -f /init.sql &&
+        echo 'Database initialization complete!'
+      "
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
 
   backend:
     build:
@@ -29,6 +50,7 @@ services:
     ports:
       - "8080:8080"
     environment:
+      QUARKUS_PROFILE: prod
       QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgres:5432/beanscore
       QUARKUS_DATASOURCE_USERNAME: beanscore
       QUARKUS_DATASOURCE_PASSWORD: beanscore123
@@ -49,15 +71,13 @@ services:
       context: ./app
       dockerfile: Dockerfile
     container_name: beanscore-frontend
+    image: rmcampos/bean-score/beanscore:app-latest
     ports:
       - "80:80"
     depends_on:
       - backend
     networks:
       - beanscore-network
-
-volumes:
-  postgres_data:
 
 networks:
   beanscore-network:

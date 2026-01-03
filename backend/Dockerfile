@@ -40,4 +40,4 @@ RUN chmod 775 /work/application
 EXPOSE 8080
 
 # Run the native application
-CMD ["./application", "-Dquarkus.http.host=0.0.0.0"]
+CMD ["./application", "-Dquarkus.profile=prod", "-Dquarkus.http.host=0.0.0.0"]
