@@ -39,5 +39,8 @@ RUN chmod 775 /work/application
 # Expose port
 EXPOSE 8080
 
+# Set profile via environment variable (better for native images)
+ENV QUARKUS_PROFILE=prod
+
 # Run the native application
-CMD ["./application", "-Dquarkus.profile=prod", "-Dquarkus.http.host=0.0.0.0"]
+CMD ["./application", "-Dquarkus.http.host=0.0.0.0"]
