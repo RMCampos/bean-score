@@ -1,31 +1,60 @@
 package com.beanscore.lifecycle;
 
+import io.quarkus.runtime.Startup;
 import io.quarkus.runtime.StartupEvent;
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.config.ConfigProvider;
 import org.jboss.logging.Logger;
 
+@Startup
 @ApplicationScoped
 public class StartupLogger {
 
   private static final Logger logger = Logger.getLogger(StartupLogger.class);
 
-  @ConfigProperty(name = "quarkus.profile")
-  String profile;
+  // This runs during bean initialization, before JPA/datasource startup
+  @PostConstruct
+  void logEarlyConfig() {
+    logger.infof("===========================================");
+    logger.infof("BeanScore API - EARLY CONFIG CHECK");
+    logger.infof("===========================================");
 
-  @ConfigProperty(name = "quarkus.datasource.username", defaultValue = "not-set")
-  String datasourceUsername;
+    // Check environment variables directly
+    logger.infof("ENV: QUARKUS_PROFILE = %s", System.getenv("QUARKUS_PROFILE"));
+    logger.infof("ENV: QUARKUS_DATASOURCE_JDBC_URL = %s", System.getenv("QUARKUS_DATASOURCE_JDBC_URL"));
+    logger.infof("ENV: QUARKUS_DATASOURCE_USERNAME = %s", System.getenv("QUARKUS_DATASOURCE_USERNAME"));
 
-  @ConfigProperty(name = "quarkus.datasource.jdbc.url", defaultValue = "not-set")
-  String datasourceUrl;
+    String envPassword = System.getenv("QUARKUS_DATASOURCE_PASSWORD");
+    if (envPassword != null && !envPassword.isEmpty()) {
+      logger.infof("ENV: QUARKUS_DATASOURCE_PASSWORD = ***%s (length: %d)",
+          envPassword.substring(Math.max(0, envPassword.length() - 3)),
+          envPassword.length());
+    } else {
+      logger.infof("ENV: QUARKUS_DATASOURCE_PASSWORD = not-set");
+    }
 
+    // Try to read from config
+    try {
+      String profile = ConfigProvider.getConfig().getOptionalValue("quarkus.profile", String.class).orElse("unknown");
+      String url = ConfigProvider.getConfig().getOptionalValue("quarkus.datasource.jdbc.url", String.class).orElse("not-set");
+      String username = ConfigProvider.getConfig().getOptionalValue("quarkus.datasource.username", String.class).orElse("not-set");
+
+      logger.infof("CONFIG: quarkus.profile = %s", profile);
+      logger.infof("CONFIG: quarkus.datasource.jdbc.url = %s", url);
+      logger.infof("CONFIG: quarkus.datasource.username = %s", username);
+    } catch (Exception e) {
+      logger.warnf("Could not read config values: %s", e.getMessage());
+    }
+
+    logger.infof("===========================================");
+  }
+
+  // This runs after successful startup
   void onStart(@Observes StartupEvent ev) {
     logger.infof("===========================================");
-    logger.infof("BeanScore API Starting");
-    logger.infof("Active Profile: %s", profile);
-    logger.infof("Datasource URL: %s", datasourceUrl);
-    logger.infof("Datasource User: %s", datasourceUsername);
+    logger.infof("BeanScore API Started Successfully!");
     logger.infof("===========================================");
   }
 }

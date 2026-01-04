@@ -13,28 +13,30 @@ COPY --chown=quarkus:quarkus mvnw /code/mvnw
 COPY --chown=quarkus:quarkus .mvn /code/.mvn
 COPY --chown=quarkus:quarkus pom.xml /code/
 
-# Download dependencies (cached layer)
-USER quarkus
-RUN ./mvnw dependency:go-offline -B
-
 # Copy source code
 COPY --chown=quarkus:quarkus src /code/src
 
 # Build native executable
+USER quarkus
 RUN ./mvnw package -Pnative -DskipTests
 
 ####
 # Runtime stage - Minimal container
 ####
-FROM quay.io/quarkus/quarkus-micro-image:2.0
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.3
 
 WORKDIR /work/
+
+# Install curl for healthchecks
+USER root
+RUN microdnf install -y curl-minimal && microdnf clean all
 
 # Copy the native executable from build stage
 COPY --from=build /code/target/*-runner /work/application
 
 # Set permissions
 RUN chmod 775 /work/application
+USER 1001
 
 # Expose port
 EXPOSE 8080

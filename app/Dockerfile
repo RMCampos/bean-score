@@ -3,6 +3,14 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
+# Accept build arguments
+ARG VITE_BACKEND_SERVER
+ARG VITE_DEBUG_MAPS
+
+# Set as environment variables for the build
+ENV VITE_BACKEND_SERVER=$VITE_BACKEND_SERVER
+ENV VITE_DEBUG_MAPS=$VITE_DEBUG_MAPS
+
 # Copy package files
 COPY package.json package-lock.json ./
 

@@ -73,8 +73,8 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Tag | Docker Hub Link |" >> $GITHUB_STEP_SUMMARY
           echo "|-----|-----------------|" >> $GITHUB_STEP_SUMMARY
-          echo "| \`${{ steps.version.outputs.tag }}\` | [View on Docker Hub](https://hub.docker.com/r/${{ secrets.DOCKER_USERNAME }}/bean-score/tags?name=${{ steps.version.outputs.tag }}) |" >> $GITHUB_STEP_SUMMARY
-          echo "| \`backend-latest\` | [View on Docker Hub](https://hub.docker.com/r/${{ secrets.DOCKER_USERNAME }}/bean-score/tags?name=backend-latest) |" >> $GITHUB_STEP_SUMMARY
+          echo "| \`${{ steps.version.outputs.tag }}\` | [View on Docker Hub](https://hub.docker.com/r/rmcampos/bean-score/tags?name=${{ steps.version.outputs.tag }}) |" >> $GITHUB_STEP_SUMMARY
+          echo "| \`backend-latest\` | [View on Docker Hub](https://hub.docker.com/r/rmcampos/bean-score/tags?name=backend-latest) |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Build Information" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -88,5 +88,5 @@ jobs:
           echo "### Pull Command" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ${{ secrets.DOCKER_USERNAME }}/bean-score:${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull rmcampos/bean-score:${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
