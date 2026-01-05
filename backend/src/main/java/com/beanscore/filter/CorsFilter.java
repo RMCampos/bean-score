@@ -14,7 +14,7 @@ public class CorsFilter implements ContainerResponseFilter {
   private static final List<String> ALLOWED_ORIGINS = Arrays.asList(
     "http://localhost:5173",
     "http://localhost:80",
-    "https://beans.darkroasted.vps-kinghost.net"
+    "https://beanscore.darkroasted.vps-kinghost.net"
   );
 
   @Override
