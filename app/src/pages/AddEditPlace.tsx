@@ -75,8 +75,9 @@ export const AddEditPlace = () => {
   };
 
   const handlePhotoSelect = async (file: File) => {
-    if (file.size > 2 * 1024 * 1024) {
-      setError('Photo size must be under 2MB');
+    // Allow larger files since they will be resized before upload
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Photo size must be under 10MB');
       return;
     }
 
@@ -273,7 +274,7 @@ export const AddEditPlace = () => {
 
             <div>
               <label htmlFor="photo" className="block text-sm font-medium text-gray-300 mb-1">
-                Photo (max 2MB, JPG/PNG)
+                Photo (max 10MB, JPG/PNG - will be resized)
               </label>
               <input
                 id="photo"
