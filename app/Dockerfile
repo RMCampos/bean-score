@@ -6,10 +6,12 @@ WORKDIR /app
 # Accept build arguments
 ARG VITE_BACKEND_SERVER
 ARG VITE_DEBUG_MAPS
+ARG VITE_GOOGLE_MAPS_API_KEY
 
 # Set as environment variables for the build
 ENV VITE_BACKEND_SERVER=$VITE_BACKEND_SERVER
 ENV VITE_DEBUG_MAPS=$VITE_DEBUG_MAPS
+ENV VITE_GOOGLE_MAPS_API_KEY=$VITE_GOOGLE_MAPS_API_KEY
 
 # Copy package files
 COPY package.json package-lock.json ./
