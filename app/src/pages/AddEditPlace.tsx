@@ -8,6 +8,7 @@ import { serverApi } from '../services/serverApi';
 import { geocodeAddress } from '../services/geocoding';
 import type { CoffeePlaceFormData } from '../types';
 import { isOnline } from '../utils/helpers';
+import { usePhotoUrl, clearPlacePhotoCache } from '../hooks/usePhotoUrl';
 
 export const AddEditPlace = () => {
   const { id } = useParams();
@@ -30,12 +31,20 @@ export const AddEditPlace = () => {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [hasExistingPhoto, setHasExistingPhoto] = useState(false);
   const [processingPhoto, setProcessingPhoto] = useState(false);
+  const { photoUrl: existingPhotoUrl } = usePhotoUrl(hasExistingPhoto && id ? id : null, 'thumbnail');
 
   useEffect(() => {
     if (id) {
       loadPlace();
     }
   }, [id]);
+
+  // Update preview when existing photo loads
+  useEffect(() => {
+    if (hasExistingPhoto && existingPhotoUrl && !photoFile) {
+      setPhotoPreview(existingPhotoUrl);
+    }
+  }, [hasExistingPhoto, existingPhotoUrl, photoFile]);
 
   const loadPlace = async () => {
     if (!id) return;
@@ -57,9 +66,6 @@ export const AddEditPlace = () => {
 
         if (place.hasPhoto) {
           setHasExistingPhoto(true);
-          setPhotoPreview(
-            `${import.meta.env.VITE_BACKEND_SERVER}/coffee-places/${id}/photo/thumbnail?t=${Date.now()}`
-          );
         }
       }
     } catch (error) {
@@ -100,6 +106,7 @@ export const AddEditPlace = () => {
 
     try {
       await serverApi.deletePhoto(id);
+      clearPlacePhotoCache(id); // Clear cache after deleting
       setPhotoPreview(null);
       setHasExistingPhoto(false);
       setPhotoFile(null);
@@ -174,13 +181,16 @@ export const AddEditPlace = () => {
         });
 
         await serverApi.uploadPhoto(placeId, resizedPhoto, thumbnail);
+        clearPlacePhotoCache(placeId); // Clear cache so new photo loads fresh
       }
 
       navigate('/home');
     } catch (err) {
+      console.error('Form submission error:', err);
       setError(err instanceof Error ? err.message : 'Failed to save place');
+      setLoading(false); // Explicitly reset loading state on error
     } finally {
-      setLoading(false);
+      setLoading(false); // Also reset in finally to ensure it always runs
     }
   };
 
@@ -301,10 +311,10 @@ export const AddEditPlace = () => {
                         type="button"
                         onClick={() => {
                           setPhotoFile(null);
-                          setPhotoPreview(hasExistingPhoto && id
-                            ? `${import.meta.env.VITE_BACKEND_SERVER}/coffee-places/${id}/photo/thumbnail?t=${Date.now()}`
-                            : null
-                          );
+                          // Clear preview, useEffect will restore existing photo if available
+                          if (!hasExistingPhoto) {
+                            setPhotoPreview(null);
+                          }
                         }}
                         className="text-gray-400 hover:text-gray-300 text-sm"
                       >

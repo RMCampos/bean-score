@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { User, AuthContextType } from '../types';
 import { serverApi } from '../services/serverApi';
+import { clearPhotoCache } from '../hooks/usePhotoUrl';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -36,6 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     serverApi.logout();
+    clearPhotoCache(); // Clear photo cache on logout
     setUser(null);
   };
 

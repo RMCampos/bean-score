@@ -3,12 +3,27 @@ import { useNavigate } from 'react-router-dom';
 import { Navigation } from '../components/Navigation';
 import { useAuth } from '../contexts/AuthContext';
 import { serverApi } from '../services/serverApi';
+import { getPhotoCacheStats, clearPhotoCache } from '../hooks/usePhotoUrl';
 
 export const About = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [deleting, setDeleting] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [cacheStats, setCacheStats] = useState(getPhotoCacheStats());
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  const handleClearCache = () => {
+    clearPhotoCache();
+    setCacheStats(getPhotoCacheStats());
+  };
 
   const handleDeleteAccount = async () => {
     if (!user) return;
@@ -84,6 +99,39 @@ export const About = () => {
               <strong className="text-white">Email:</strong> {user?.email}
             </p>
           </div>
+        </div>
+
+        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
+          <h2 className="text-xl font-semibold text-white mb-4">Storage & Cache</h2>
+          <p className="text-gray-300 mb-4">
+            Photos are cached in memory for faster loading. The cache is automatically cleared when
+            you refresh the page or close the browser.
+          </p>
+
+          <div className="bg-gray-700 rounded-lg p-4 mb-4">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-gray-400">Cached Photos</p>
+                <p className="text-white font-semibold text-lg">{cacheStats.count}</p>
+              </div>
+              <div>
+                <p className="text-gray-400">Cache Size</p>
+                <p className="text-white font-semibold text-lg">{formatBytes(cacheStats.totalSize)}</p>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={handleClearCache}
+            disabled={cacheStats.count === 0}
+            className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Clear Photo Cache
+          </button>
+
+          {cacheStats.count === 0 && (
+            <p className="text-gray-500 text-sm mt-2">Cache is empty</p>
+          )}
         </div>
 
         <div className="bg-red-900/20 border border-red-500 rounded-lg p-6">

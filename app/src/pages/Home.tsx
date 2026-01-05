@@ -8,6 +8,7 @@ import { serverApi } from '../services/serverApi';
 import { getCurrentPosition } from '../services/geocoding';
 import type { CoffeePlace, SearchFilters } from '../types';
 import { getPlaceScore, calculateDistance, formatDistance, openAddressInMaps, isOnline } from '../utils/helpers';
+import { usePhotoUrl } from '../hooks/usePhotoUrl';
 
 const DEBUG_MAPS = import.meta.env.VITE_DEBUG_MAPS === 'true';
 
@@ -15,6 +16,26 @@ const debugLog = (...args: unknown[]) => {
   if (DEBUG_MAPS) {
     console.log('[MAPS DEBUG]', ...args);
   }
+};
+
+const FullPhotoModal = ({ placeId, onClose }: { placeId: string; onClose: () => void }) => {
+  const { photoUrl, loading } = usePhotoUrl(placeId, 'photo');
+
+  return (
+    <Modal isOpen={true} onClose={onClose}>
+      {loading ? (
+        <div className="text-white text-center p-8">Loading full photo...</div>
+      ) : photoUrl ? (
+        <img
+          src={photoUrl}
+          alt="Full size"
+          className="max-w-full max-h-[90vh] rounded"
+        />
+      ) : (
+        <div className="text-white text-center p-8">Failed to load photo</div>
+      )}
+    </Modal>
+  );
 };
 
 export const Home = () => {
@@ -138,6 +159,33 @@ export const Home = () => {
     return filteredPlaces;
   }, [filteredPlaces, userLocation]);
 
+  const PlaceThumbnail = ({ placeId, placeName, onClick }: { placeId: string; placeName: string; onClick: () => void }) => {
+    const { photoUrl, loading } = usePhotoUrl(placeId, 'thumbnail');
+
+    if (loading) {
+      return (
+        <div className="mb-3 -mx-4 -mt-4 w-full h-48 bg-gray-700 rounded-t-lg flex items-center justify-center">
+          <div className="text-gray-400 text-sm">Loading...</div>
+        </div>
+      );
+    }
+
+    if (!photoUrl) {
+      return null;
+    }
+
+    return (
+      <div className="mb-3 -mx-4 -mt-4">
+        <img
+          src={photoUrl}
+          alt={placeName}
+          className="w-full h-48 object-cover rounded-t-lg cursor-pointer hover:opacity-90 transition-opacity"
+          onClick={onClick}
+        />
+      </div>
+    );
+  };
+
   const PlaceCard = ({ place }: { place: CoffeePlace }) => {
     const score = getPlaceScore(place);
 
@@ -159,14 +207,11 @@ export const Home = () => {
     return (
       <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-emerald-500 transition-colors">
         {place.hasPhoto && (
-          <div className="mb-3 -mx-4 -mt-4">
-            <img
-              src={`${import.meta.env.VITE_BACKEND_SERVER}/coffee-places/${place.id}/photo/thumbnail`}
-              alt={place.name}
-              className="w-full h-48 object-cover rounded-t-lg cursor-pointer hover:opacity-90 transition-opacity"
-              onClick={() => setSelectedPhoto(place.id)}
-            />
-          </div>
+          <PlaceThumbnail
+            placeId={place.id}
+            placeName={place.name}
+            onClick={() => setSelectedPhoto(place.id)}
+          />
         )}
 
         <div className="flex justify-between items-start mb-3">
@@ -340,15 +385,7 @@ export const Home = () => {
         )}
       </div>
 
-      {selectedPhoto && (
-        <Modal isOpen={true} onClose={() => setSelectedPhoto(null)}>
-          <img
-            src={`${import.meta.env.VITE_BACKEND_SERVER}/coffee-places/${selectedPhoto}/photo`}
-            alt="Full size"
-            className="max-w-full max-h-[90vh] rounded"
-          />
-        </Modal>
-      )}
+      {selectedPhoto && <FullPhotoModal placeId={selectedPhoto} onClose={() => setSelectedPhoto(null)} />}
     </>
   );
 };

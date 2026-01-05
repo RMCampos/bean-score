@@ -1,18 +1,15 @@
 package com.beanscore.resource;
 
 import com.beanscore.service.CoffeePlaceService;
-
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.jboss.resteasy.reactive.MultipartForm;
-import org.jboss.resteasy.reactive.PartType;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
+import org.jboss.resteasy.reactive.PartType;
 
 @Path("/coffee-places/{id}/photo")
 @RolesAllowed("user")
@@ -36,7 +33,7 @@ public class CoffeePlacePhotoResource {
 
   @POST
   @Consumes(MediaType.MULTIPART_FORM_DATA)
-  public Response uploadPhoto(@PathParam("id") UUID id, @MultipartForm PhotoUpload upload) {
+  public Response uploadPhoto(@PathParam("id") UUID id, @BeanParam PhotoUpload upload) {
     try {
       byte[] photoBytes = upload.photo.readAllBytes();
       byte[] thumbnailBytes = upload.thumbnail.readAllBytes();

@@ -54,12 +54,10 @@ public class CoffeePlace extends PanacheEntityBase {
   @Column(precision = 11, scale = 8)
   public BigDecimal longitude;
 
-  @Lob
-  @Column(name = "photo", columnDefinition = "BYTEA")
+  @Column(name = "photo", columnDefinition = "bytea")
   public byte[] photo;
 
-  @Lob
-  @Column(name = "photo_thumbnail", columnDefinition = "BYTEA")
+  @Column(name = "photo_thumbnail", columnDefinition = "bytea")
   public byte[] photoThumbnail;
 
   @Column(name = "photo_content_type")

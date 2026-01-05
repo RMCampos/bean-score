@@ -9,18 +9,47 @@ const debugLog = (...args: unknown[]) => {
   }
 };
 
+// Mask API key for logging (show first 4 and last 4 chars)
+const maskApiKey = (key: string): string => {
+  if (!key || key === 'YOUR_API_KEY_HERE') return '❌ NOT SET';
+  if (key.length < 12) return '⚠️ TOO SHORT';
+  return `${key.substring(0, 4)}...${key.substring(key.length - 4)}`;
+};
+
+// Debug API key on load
+if (DEBUG_MAPS) {
+  console.log('[MAPS DEBUG] 🔑 Google Maps API Key Check:');
+  console.log('[MAPS DEBUG]   - Key from env:', maskApiKey(GOOGLE_MAPS_API_KEY));
+  console.log('[MAPS DEBUG]   - Full length:', GOOGLE_MAPS_API_KEY?.length || 0, 'chars');
+
+  if (!GOOGLE_MAPS_API_KEY || GOOGLE_MAPS_API_KEY === 'YOUR_API_KEY_HERE') {
+    console.error('[MAPS DEBUG] ❌ CRITICAL: Google Maps API key is not configured!');
+    console.error('[MAPS DEBUG]    Please set VITE_GOOGLE_MAPS_API_KEY in your .env file');
+  } else if (GOOGLE_MAPS_API_KEY.length < 30) {
+    console.warn('[MAPS DEBUG] ⚠️ WARNING: API key seems too short (expected ~39 chars)');
+  } else {
+    console.log('[MAPS DEBUG] ✅ API key appears to be configured');
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let geocoder: any = null;
 let isLoading = false;
 let loadPromise: Promise<any> | null = null;
 
 const loadGoogleMapsScript = (): Promise<void> => {
-  if (loadPromise) return loadPromise;
+  if (loadPromise) {
+    debugLog('📜 Google Maps script already loading/loaded');
+    return loadPromise;
+  }
+
+  debugLog('📜 Loading Google Maps script...');
 
   loadPromise = new Promise<void>((resolve, reject) => {
     // Check if already loaded
     // @ts-expect-error - google is loaded dynamically
     if (typeof google !== 'undefined' && google.maps) {
+      debugLog('✅ Google Maps already loaded');
       resolve(undefined);
       return;
     }
@@ -28,17 +57,37 @@ const loadGoogleMapsScript = (): Promise<void> => {
     // Check if script is already being loaded
     const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
     if (existingScript) {
-      existingScript.addEventListener('load', () => resolve(undefined));
-      existingScript.addEventListener('error', () => reject(new Error('Failed to load Google Maps')));
+      debugLog('📜 Found existing Google Maps script tag');
+      existingScript.addEventListener('load', () => {
+        debugLog('✅ Google Maps script loaded (existing tag)');
+        resolve(undefined);
+      });
+      existingScript.addEventListener('error', () => {
+        console.error('[MAPS] ❌ Failed to load Google Maps script (existing tag)');
+        reject(new Error('Failed to load Google Maps'));
+      });
       return;
     }
 
+    const scriptUrl = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=geocoding`;
+    debugLog('📜 Creating new script tag:', scriptUrl.replace(GOOGLE_MAPS_API_KEY, maskApiKey(GOOGLE_MAPS_API_KEY)));
+
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=geocoding`;
+    script.src = scriptUrl;
     script.async = true;
     script.defer = true;
-    script.onload = () => resolve(undefined);
-    script.onerror = () => reject(new Error('Failed to load Google Maps script'));
+    script.onload = () => {
+      debugLog('✅ Google Maps script loaded successfully');
+      resolve(undefined);
+    };
+    script.onerror = (error) => {
+      console.error('[MAPS] ❌ Failed to load Google Maps script:', error);
+      console.error('[MAPS] This could mean:');
+      console.error('[MAPS]   1. Invalid API key');
+      console.error('[MAPS]   2. Network connectivity issues');
+      console.error('[MAPS]   3. CORS/CSP restrictions');
+      reject(new Error('Failed to load Google Maps script'));
+    };
     document.head.appendChild(script);
   });
 
@@ -77,26 +126,48 @@ const initGeocoder = async (): Promise<any> => {
 export const geocodeAddress = async (
   address: string
 ): Promise<{ lat: number; lng: number } | null> => {
+  debugLog('🗺️ geocodeAddress called for:', address);
+
   try {
     const geocoderInstance = await initGeocoder();
+    debugLog('✅ Geocoder initialized');
 
     return new Promise((resolve) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       geocoderInstance.geocode({ address }, (results: any, status: any) => {
+        debugLog('📍 Geocoding result:', { status, resultsCount: results?.length || 0 });
+
         if (status === 'OK' && results && results[0]) {
           const location = results[0].geometry.location;
-          resolve({
+          const coords = {
             lat: location.lat(),
             lng: location.lng(),
-          });
+          };
+          debugLog('✅ Geocoding success:', coords);
+          resolve(coords);
         } else {
-          console.error('Geocoding failed:', status);
+          console.error('[GEOCODING] ❌ Failed:', status);
+
+          // Detailed error messages
+          if (status === 'REQUEST_DENIED') {
+            console.error('[GEOCODING] API key is invalid or request was denied');
+            console.error('[GEOCODING] Check your Google Cloud Console:');
+            console.error('[GEOCODING]   1. Is Geocoding API enabled?');
+            console.error('[GEOCODING]   2. Is the API key valid?');
+            console.error('[GEOCODING]   3. Are there any restrictions blocking this domain?');
+          } else if (status === 'ZERO_RESULTS') {
+            console.warn('[GEOCODING] No results found for address:', address);
+          } else if (status === 'OVER_QUERY_LIMIT') {
+            console.error('[GEOCODING] API quota exceeded');
+          }
+
           resolve(null);
         }
       });
     });
   } catch (error) {
-    console.error('Geocoding error:', error);
+    console.error('[GEOCODING] ❌ Exception:', error);
+    debugLog('Exception details:', error);
     return null;
   }
 };
