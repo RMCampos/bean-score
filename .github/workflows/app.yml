@@ -63,8 +63,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            VITE_BACKEND_SERVER=${{ secrets.VITE_BACKEND_SERVER || 'http://localhost:8080' }}
-            VITE_DEBUG_MAPS=${{ secrets.VITE_DEBUG_MAPS || 'false' }}
+            VITE_BACKEND_SERVER=${{ vars.VITE_BACKEND_SERVER || 'https://beanapi.darkroasted.vps-kinghost.net' }}
+            VITE_DEBUG_MAPS=${{ vars.VITE_DEBUG_MAPS || 'false' }}
+            VITE_GOOGLE_MAPS_API_KEY=${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
 
       - name: Create and push Git tag
         run: |
