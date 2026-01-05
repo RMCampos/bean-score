@@ -224,7 +224,14 @@ export const Home = () => {
               {place.address}
             </button>
             {place.instagramHandle && (
-              <p className="text-sm text-emerald-400">@{place.instagramHandle}</p>
+              <a
+                href={`https://instagram.com/${place.instagramHandle}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
+              >
+                @{place.instagramHandle}
+              </a>
             )}
           </div>
           <div className="text-right">
