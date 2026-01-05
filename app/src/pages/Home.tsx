@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Navigation } from '../components/Navigation';
 import { StarRating } from '../components/StarRating';
+import { Modal } from '../components/Modal';
 import { useAuth } from '../contexts/AuthContext';
 import { serverApi } from '../services/serverApi';
 import { getCurrentPosition } from '../services/geocoding';
@@ -21,6 +22,7 @@ export const Home = () => {
   const [places, setPlaces] = useState<CoffeePlace[]>([]);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [filters, setFilters] = useState<SearchFilters>({
     searchTerm: '',
     hasGlutenFree: false,
@@ -156,6 +158,17 @@ export const Home = () => {
 
     return (
       <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-emerald-500 transition-colors">
+        {place.hasPhoto && (
+          <div className="mb-3 -mx-4 -mt-4">
+            <img
+              src={`${import.meta.env.VITE_BACKEND_SERVER}/coffee-places/${place.id}/photo/thumbnail`}
+              alt={place.name}
+              className="w-full h-48 object-cover rounded-t-lg cursor-pointer hover:opacity-90 transition-opacity"
+              onClick={() => setSelectedPhoto(place.id)}
+            />
+          </div>
+        )}
+
         <div className="flex justify-between items-start mb-3">
           <div>
             <h3 className="text-lg font-semibold text-white">{place.name}</h3>
@@ -326,6 +339,16 @@ export const Home = () => {
             </>
         )}
       </div>
+
+      {selectedPhoto && (
+        <Modal isOpen={true} onClose={() => setSelectedPhoto(null)}>
+          <img
+            src={`${import.meta.env.VITE_BACKEND_SERVER}/coffee-places/${selectedPhoto}/photo`}
+            alt="Full size"
+            className="max-w-full max-h-[90vh] rounded"
+          />
+        </Modal>
+      )}
     </>
   );
 };

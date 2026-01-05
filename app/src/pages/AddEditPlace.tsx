@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import imageCompression from 'browser-image-compression';
 import { Navigation } from '../components/Navigation';
 import { StarRating } from '../components/StarRating';
 import { serverApi } from '../services/serverApi';
@@ -25,6 +26,10 @@ export const AddEditPlace = () => {
     hasVeganFood: false,
     hasSugarFree: false,
   });
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [hasExistingPhoto, setHasExistingPhoto] = useState(false);
+  const [processingPhoto, setProcessingPhoto] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -49,10 +54,57 @@ export const AddEditPlace = () => {
           hasVeganFood: place.hasVeganFood,
           hasSugarFree: place.hasSugarFree,
         });
+
+        if (place.hasPhoto) {
+          setHasExistingPhoto(true);
+          setPhotoPreview(
+            `${import.meta.env.VITE_BACKEND_SERVER}/coffee-places/${id}/photo/thumbnail?t=${Date.now()}`
+          );
+        }
       }
     } catch (error) {
       console.error('Failed to load place:', error);
       setError('Failed to load place');
+    }
+  };
+
+  const handlePhotoSelect = async (file: File) => {
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Photo size must be under 2MB');
+      return;
+    }
+
+    if (!file.type.match(/^image\/(jpeg|png)$/)) {
+      setError('Only JPEG and PNG images are allowed');
+      return;
+    }
+
+    setProcessingPhoto(true);
+    setError('');
+
+    try {
+      setPhotoFile(file);
+      const preview = URL.createObjectURL(file);
+      setPhotoPreview(preview);
+      setHasExistingPhoto(false);
+    } catch (err) {
+      setError('Failed to process photo');
+      console.error('Photo processing error:', err);
+    } finally {
+      setProcessingPhoto(false);
+    }
+  };
+
+  const handleDeletePhoto = async () => {
+    if (!id || !confirm('Delete this photo?')) return;
+
+    try {
+      await serverApi.deletePhoto(id);
+      setPhotoPreview(null);
+      setHasExistingPhoto(false);
+      setPhotoFile(null);
+    } catch (err) {
+      setError('Failed to delete photo');
     }
   };
 
@@ -68,9 +120,10 @@ export const AddEditPlace = () => {
     setLoading(true);
 
     try {
+      let placeId = id;
+
       if (id) {
         // Update existing place
-        // Try to geocode the address if online
         let updatedFormData = { ...formData };
         if (isOnline()) {
           const coords = await geocodeAddress(formData.address);
@@ -98,7 +151,29 @@ export const AddEditPlace = () => {
         }
 
         // Create new place with coordinates
-        await serverApi.createPlace(newFormData);
+        const newPlace = await serverApi.createPlace(newFormData);
+        placeId = newPlace.id;
+      }
+
+      // Upload photo if selected
+      if (photoFile && placeId) {
+        // Resize original photo (max 1200px)
+        const resizedPhoto = await imageCompression(photoFile, {
+          maxWidthOrHeight: 1200,
+          useWebWorker: true,
+          fileType: photoFile.type,
+          initialQuality: 0.8,
+        });
+
+        // Create thumbnail (300x300 square crop)
+        const thumbnail = await imageCompression(photoFile, {
+          maxWidthOrHeight: 300,
+          useWebWorker: true,
+          fileType: photoFile.type,
+          initialQuality: 0.7,
+        });
+
+        await serverApi.uploadPhoto(placeId, resizedPhoto, thumbnail);
       }
 
       navigate('/home');
@@ -184,6 +259,65 @@ export const AddEditPlace = () => {
                   placeholder="coffeeshop"
                 />
               </div>
+            </div>
+
+            <div>
+              <label htmlFor="photo" className="block text-sm font-medium text-gray-300 mb-1">
+                Photo (max 2MB, JPG/PNG)
+              </label>
+              <input
+                id="photo"
+                type="file"
+                accept="image/jpeg,image/png"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    handlePhotoSelect(file);
+                  }
+                }}
+                disabled={processingPhoto}
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-emerald-600 file:text-white file:hover:bg-emerald-700 file:cursor-pointer disabled:opacity-50"
+              />
+
+              {photoPreview && (
+                <div className="mt-3">
+                  <img
+                    src={photoPreview}
+                    alt="Preview"
+                    className="max-w-xs rounded border border-gray-600"
+                  />
+                  <div className="mt-2 flex gap-2">
+                    {hasExistingPhoto && id && (
+                      <button
+                        type="button"
+                        onClick={handleDeletePhoto}
+                        className="text-red-400 hover:text-red-300 text-sm"
+                      >
+                        Delete current photo
+                      </button>
+                    )}
+                    {photoFile && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPhotoFile(null);
+                          setPhotoPreview(hasExistingPhoto && id
+                            ? `${import.meta.env.VITE_BACKEND_SERVER}/coffee-places/${id}/photo/thumbnail?t=${Date.now()}`
+                            : null
+                          );
+                        }}
+                        className="text-gray-400 hover:text-gray-300 text-sm"
+                      >
+                        Remove new photo
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {processingPhoto && (
+                <p className="mt-2 text-sm text-emerald-400">Processing photo...</p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">

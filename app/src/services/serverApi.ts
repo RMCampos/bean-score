@@ -164,5 +164,46 @@ export const serverApi = {
     if (!response.ok) {
       throw new Error('Failed to delete place: ' + response.statusText);
     }
+  },
+
+  uploadPhoto: async (placeId: string, photoBlob: Blob, thumbnailBlob: Blob): Promise<void> => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) throw new Error('Not authenticated');
+
+    const formData = new FormData();
+    formData.append('photo', photoBlob);
+    formData.append('thumbnail', thumbnailBlob);
+    formData.append('contentType', photoBlob.type);
+
+    const response = await fetch(
+      `${import.meta.env.VITE_BACKEND_SERVER}/coffee-places/${placeId}/photo`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || 'Failed to upload photo');
+    }
+  },
+
+  deletePhoto: async (placeId: string): Promise<void> => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(
+      `${import.meta.env.VITE_BACKEND_SERVER}/coffee-places/${placeId}/photo`,
+      {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to delete photo');
+    }
   }
 }

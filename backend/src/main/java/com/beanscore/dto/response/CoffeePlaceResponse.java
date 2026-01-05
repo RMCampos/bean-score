@@ -16,4 +16,5 @@ public record CoffeePlaceResponse(
     Boolean hasVeganFood,
     Boolean hasSugarFree,
     BigDecimal latitude,
-    BigDecimal longitude) {}
+    BigDecimal longitude,
+    Boolean hasPhoto) {}

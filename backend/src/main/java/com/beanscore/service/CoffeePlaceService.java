@@ -120,6 +120,78 @@ public class CoffeePlaceService {
     logger.fine("Deleted coffee place with id: " + id + " for user id: " + currentUserId);
   }
 
+  @Transactional
+  public void uploadPhoto(UUID id, byte[] photo, byte[] thumbnail, String contentType) {
+    UUID currentUserId = jwtService.getCurrentUserId();
+
+    logger.fine("Uploading photo for coffee place with id: " + id);
+
+    CoffeePlace coffeePlace =
+        coffeePlaceRepository
+            .findByIdAndUserId(id, currentUserId)
+            .orElseThrow(() -> new NotFoundException("Coffee place not found"));
+
+    coffeePlace.photo = photo;
+    coffeePlace.photoThumbnail = thumbnail;
+    coffeePlace.photoContentType = contentType;
+
+    coffeePlaceRepository.persist(coffeePlace);
+
+    logger.fine("Photo uploaded for coffee place with id: " + id);
+  }
+
+  public PhotoData getPhoto(UUID id) {
+    UUID currentUserId = jwtService.getCurrentUserId();
+
+    CoffeePlace coffeePlace =
+        coffeePlaceRepository
+            .findByIdAndUserId(id, currentUserId)
+            .orElseThrow(() -> new NotFoundException("Coffee place not found"));
+
+    if (coffeePlace.photo == null) {
+      return null;
+    }
+
+    return new PhotoData(coffeePlace.photo, coffeePlace.photoContentType);
+  }
+
+  public PhotoData getPhotoThumbnail(UUID id) {
+    UUID currentUserId = jwtService.getCurrentUserId();
+
+    CoffeePlace coffeePlace =
+        coffeePlaceRepository
+            .findByIdAndUserId(id, currentUserId)
+            .orElseThrow(() -> new NotFoundException("Coffee place not found"));
+
+    if (coffeePlace.photoThumbnail == null) {
+      return null;
+    }
+
+    return new PhotoData(coffeePlace.photoThumbnail, coffeePlace.photoContentType);
+  }
+
+  @Transactional
+  public void deletePhoto(UUID id) {
+    UUID currentUserId = jwtService.getCurrentUserId();
+
+    logger.fine("Deleting photo for coffee place with id: " + id);
+
+    CoffeePlace coffeePlace =
+        coffeePlaceRepository
+            .findByIdAndUserId(id, currentUserId)
+            .orElseThrow(() -> new NotFoundException("Coffee place not found"));
+
+    coffeePlace.photo = null;
+    coffeePlace.photoThumbnail = null;
+    coffeePlace.photoContentType = null;
+
+    coffeePlaceRepository.persist(coffeePlace);
+
+    logger.fine("Photo deleted for coffee place with id: " + id);
+  }
+
+  public record PhotoData(byte[] bytes, String contentType) {}
+
   private CoffeePlaceResponse mapToCoffeePlaceResponse(CoffeePlace coffeePlace) {
     CoffeePlaceResponse response =
         new CoffeePlaceResponse(
@@ -134,7 +206,8 @@ public class CoffeePlaceService {
             coffeePlace.hasVeganFood,
             coffeePlace.hasSugarFree,
             coffeePlace.latitude,
-            coffeePlace.longitude);
+            coffeePlace.longitude,
+            coffeePlace.photo != null);
     return response;
   }
 }

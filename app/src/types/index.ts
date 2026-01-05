@@ -20,6 +20,7 @@ export interface CoffeePlace {
   updatedAt: Date;
   latitude?: number;
   longitude?: number;
+  hasPhoto?: boolean;
 }
 
 export interface AuthContextType {

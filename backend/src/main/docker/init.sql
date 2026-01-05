@@ -31,3 +31,9 @@ CREATE TABLE IF NOT EXISTS coffee_places (
 
 CREATE INDEX IF NOT EXISTS idx_coffee_places_user_id ON coffee_places(user_id);
 CREATE INDEX IF NOT EXISTS idx_coffee_places_created_at ON coffee_places(created_at DESC);
+
+-- Add photo columns to coffee_places table
+ALTER TABLE coffee_places
+  ADD COLUMN photo BYTEA,
+  ADD COLUMN photo_thumbnail BYTEA,
+  ADD COLUMN photo_content_type VARCHAR(50);

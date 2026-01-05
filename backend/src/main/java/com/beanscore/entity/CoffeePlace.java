@@ -54,6 +54,17 @@ public class CoffeePlace extends PanacheEntityBase {
   @Column(precision = 11, scale = 8)
   public BigDecimal longitude;
 
+  @Lob
+  @Column(name = "photo", columnDefinition = "BYTEA")
+  public byte[] photo;
+
+  @Lob
+  @Column(name = "photo_thumbnail", columnDefinition = "BYTEA")
+  public byte[] photoThumbnail;
+
+  @Column(name = "photo_content_type")
+  public String photoContentType;
+
   @Column(name = "created_at", nullable = false, updatable = false)
   public LocalDateTime createdAt;
 
