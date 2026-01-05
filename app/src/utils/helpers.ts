@@ -58,15 +58,28 @@ export const formatDistance = (km: number): string => {
   return `${km.toFixed(1)}km`;
 };
 
-export const openAddressInMaps = (address: string) => {
+export const openAddressInMaps = (address: string, preferredApp?: 'google' | 'apple') => {
   const encodedAddress = encodeURIComponent(address);
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isAndroid = /Android/i.test(navigator.userAgent);
 
-  if (isMobile) {
-    // Try to open in native maps app
+  if (isIOS) {
+    if (preferredApp === 'google') {
+      // Try Google Maps app first, fallback to web
+      window.location.href = `comgooglemaps://?q=${encodedAddress}`;
+      // Fallback to Google Maps web if app not installed
+      setTimeout(() => {
+        window.open(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`, '_blank');
+      }, 500);
+    } else {
+      // Apple Maps (default for iOS)
+      window.location.href = `http://maps.apple.com/?q=${encodedAddress}`;
+    }
+  } else if (isAndroid) {
+    // Android uses geo: scheme which opens default maps app
     window.location.href = `geo:0,0?q=${encodedAddress}`;
   } else {
-    // Open in Google Maps web
+    // Desktop - open Google Maps web
     window.open(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`, '_blank');
   }
 };

@@ -204,6 +204,20 @@ export const Home = () => {
 
     debugLog('📊 Distance result for', place.name, ':', distance ? distance.toFixed(2) + 'km' : 'null');
 
+    const handleOpenMaps = () => {
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+      if (isIOS) {
+        // Show choice for iOS users
+        const choice = window.confirm(
+          'Open in Google Maps?\n\nOK = Google Maps\nCancel = Apple Maps'
+        );
+        openAddressInMaps(place.address, choice ? 'google' : 'apple');
+      } else {
+        openAddressInMaps(place.address);
+      }
+    };
+
     return (
       <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-emerald-500 transition-colors">
         {place.hasPhoto && (
@@ -218,7 +232,7 @@ export const Home = () => {
           <div>
             <h3 className="text-lg font-semibold text-white">{place.name}</h3>
             <button
-              onClick={() => openAddressInMaps(place.address)}
+              onClick={handleOpenMaps}
               className="text-sm text-gray-400 hover:text-emerald-400 transition-colors text-left"
             >
               {place.address}

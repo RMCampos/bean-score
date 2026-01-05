@@ -173,12 +173,12 @@ export const AddEditPlace = () => {
           initialQuality: 0.8,
         });
 
-        // Create thumbnail (300x300 square crop)
+        // Create thumbnail (500x500 square crop)
         const thumbnail = await imageCompression(photoFile, {
-          maxWidthOrHeight: 300,
+          maxWidthOrHeight: 500,
           useWebWorker: true,
           fileType: photoFile.type,
-          initialQuality: 0.7,
+          initialQuality: 0.8,
         });
 
         await serverApi.uploadPhoto(placeId, resizedPhoto, thumbnail);
