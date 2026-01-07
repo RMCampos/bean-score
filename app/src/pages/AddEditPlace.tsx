@@ -5,7 +5,7 @@ import imageCompression from 'browser-image-compression';
 import { Navigation } from '../components/Navigation';
 import { StarRating } from '../components/StarRating';
 import { serverApi } from '../services/serverApi';
-import { geocodeAddress } from '../services/geocoding';
+import { geocodeAddress, getCurrentPosition, reverseGeocode } from '../services/geocoding';
 import type { CoffeePlaceFormData } from '../types';
 import { isOnline } from '../utils/helpers';
 import { usePhotoUrl, clearPlacePhotoCache } from '../hooks/usePhotoUrl';
@@ -31,6 +31,7 @@ export const AddEditPlace = () => {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [hasExistingPhoto, setHasExistingPhoto] = useState(false);
   const [processingPhoto, setProcessingPhoto] = useState(false);
+  const [fetchingLocation, setFetchingLocation] = useState(false);
   const { photoUrl: existingPhotoUrl } = usePhotoUrl(hasExistingPhoto && id ? id : null, 'thumbnail');
 
   useEffect(() => {
@@ -116,6 +117,44 @@ export const AddEditPlace = () => {
     }
   };
 
+  const handleGetCurrentLocation = async () => {
+    if (!isOnline()) {
+      setError('You need to be online to get your current location');
+      return;
+    }
+
+    setFetchingLocation(true);
+    setError('');
+
+    try {
+      const position = await getCurrentPosition();
+      if (!position) {
+        setError('Could not get your location. Please check permissions and try again.');
+        return;
+      }
+
+      const { latitude, longitude } = position.coords;
+      const address = await reverseGeocode(latitude, longitude);
+
+      if (!address) {
+        setError('Could not determine address from your location. Please enter manually.');
+        return;
+      }
+
+      setFormData({
+        ...formData,
+        address,
+        latitude,
+        longitude,
+      });
+    } catch (err) {
+      console.error('Location fetch error:', err);
+      setError('Failed to get location. Please enter address manually.');
+    } finally {
+      setFetchingLocation(false);
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
@@ -131,9 +170,8 @@ export const AddEditPlace = () => {
       let placeId = id;
 
       if (id) {
-        // Update existing place
         let updatedFormData = { ...formData };
-        if (isOnline()) {
+        if (isOnline() && !formData.latitude && !formData.longitude) {
           const coords = await geocodeAddress(formData.address);
           if (coords) {
             updatedFormData = {
@@ -145,9 +183,8 @@ export const AddEditPlace = () => {
         }
         await serverApi.updatePlace(id, updatedFormData);
       } else {
-        // Geocode address BEFORE creating the place
         let newFormData = { ...formData };
-        if (isOnline()) {
+        if (isOnline() && !formData.latitude && !formData.longitude) {
           const coords = await geocodeAddress(formData.address);
           if (coords) {
             newFormData = {
@@ -158,12 +195,10 @@ export const AddEditPlace = () => {
           }
         }
 
-        // Create new place with coordinates
         const newPlace = await serverApi.createPlace(newFormData);
         placeId = newPlace.id;
       }
 
-      // Upload photo if selected
       if (photoFile && placeId) {
         // Resize original photo (max 1200px)
         const resizedPhoto = await imageCompression(photoFile, {
@@ -244,15 +279,25 @@ export const AddEditPlace = () => {
               <label htmlFor="address" className="block text-sm font-medium text-gray-300 mb-1">
                 Address *
               </label>
-              <input
-                id="address"
-                type="text"
-                required
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                placeholder="123 Main St, City"
-              />
+              <div className="flex gap-2">
+                <input
+                  id="address"
+                  type="text"
+                  required
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  placeholder="123 Main St, City"
+                />
+                <button
+                  type="button"
+                  onClick={handleGetCurrentLocation}
+                  disabled={fetchingLocation}
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                  {fetchingLocation ? 'Getting...' : 'Use Current Location'}
+                </button>
+              </div>
             </div>
 
             <div>

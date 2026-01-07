@@ -163,6 +163,50 @@ export const geocodeAddress = async (
   }
 };
 
+export const reverseGeocode = async (
+  lat: number,
+  lng: number
+): Promise<string | null> => {
+  debugLog('🗺️ reverseGeocode called for:', { lat, lng });
+
+  try {
+    const geocoderInstance = await initGeocoder();
+    debugLog('✅ Geocoder initialized for reverse geocoding');
+
+    return new Promise((resolve) => {
+      // @ts-expect-error - google is loaded dynamically
+      const latLng = new google.maps.LatLng(lat, lng);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      geocoderInstance.geocode({ location: latLng }, (results: any, status: any) => {
+        debugLog('📍 Reverse geocoding result:', { status, resultsCount: results?.length || 0 });
+
+        if (status === 'OK' && results && results[0]) {
+          const address = results[0].formatted_address;
+          debugLog('✅ Reverse geocoding success:', address);
+          resolve(address);
+        } else {
+          console.error('[REVERSE GEOCODING] ❌ Failed:', status);
+
+          if (status === 'REQUEST_DENIED') {
+            console.error('[REVERSE GEOCODING] API key is invalid or request was denied');
+          } else if (status === 'ZERO_RESULTS') {
+            console.warn('[REVERSE GEOCODING] No results found for coordinates:', { lat, lng });
+          } else if (status === 'OVER_QUERY_LIMIT') {
+            console.error('[REVERSE GEOCODING] API quota exceeded');
+          }
+
+          resolve(null);
+        }
+      });
+    });
+  } catch (error) {
+    console.error('[REVERSE GEOCODING] ❌ Exception:', error);
+    debugLog('Exception details:', error);
+    return null;
+  }
+};
+
 export const getCurrentPosition = (): Promise<GeolocationPosition | null> => {
   debugLog('🎯 getCurrentPosition called');
 
