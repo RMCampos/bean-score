@@ -51,4 +51,5 @@ export interface SearchFilters {
   hasVegMilk: boolean;
   hasVeganFood: boolean;
   hasSugarFree: boolean;
+  minCoffeeQuality: number | null;
 }

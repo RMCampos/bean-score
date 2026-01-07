@@ -21,6 +21,7 @@ export const Home = () => {
     hasVegMilk: false,
     hasVeganFood: false,
     hasSugarFree: false,
+    minCoffeeQuality: null,
   });
 
   const loadPlaces = useCallback(async () => {
@@ -77,6 +78,8 @@ export const Home = () => {
       if (filters.hasVegMilk && !place.hasVegMilk) return false;
       if (filters.hasVeganFood && !place.hasVeganFood) return false;
       if (filters.hasSugarFree && !place.hasSugarFree) return false;
+
+      if (filters.minCoffeeQuality !== null && place.coffeeQuality < filters.minCoffeeQuality) return false;
 
       return true;
     });
@@ -154,7 +157,7 @@ export const Home = () => {
             className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-4"
           />
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -194,6 +197,23 @@ export const Home = () => {
               />
               <span className="text-gray-300 text-sm">Sugar-free</span>
             </label>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-gray-300 text-sm">Min. Coffee Quality</label>
+            <select
+              value={filters.minCoffeeQuality ?? ''}
+              onChange={(e) => setFilters({ ...filters, minCoffeeQuality: e.target.value ? Number(e.target.value) : null })}
+              className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 w-full sm:w-48"
+            >
+              <option value="">Any</option>
+              <option value="2">2★+</option>
+              <option value="2.5">2.5★+</option>
+              <option value="3">3★+</option>
+              <option value="3.5">3.5★+</option>
+              <option value="4">4★+</option>
+              <option value="4.5">4.5★+</option>
+            </select>
           </div>
 
           {!isOnline() && (
