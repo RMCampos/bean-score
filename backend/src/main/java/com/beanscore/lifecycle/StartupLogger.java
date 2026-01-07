@@ -14,14 +14,12 @@ public class StartupLogger {
 
   private static final Logger logger = Logger.getLogger(StartupLogger.class);
 
-  // This runs during bean initialization, before JPA/datasource startup
   @PostConstruct
   void logEarlyConfig() {
     logger.infof("===========================================");
     logger.infof("BeanScore API - EARLY CONFIG CHECK");
     logger.infof("===========================================");
 
-    // Check environment variables directly
     logger.infof("ENV: QUARKUS_PROFILE = %s", System.getenv("QUARKUS_PROFILE"));
     logger.infof("ENV: QUARKUS_DATASOURCE_JDBC_URL = %s", System.getenv("QUARKUS_DATASOURCE_JDBC_URL"));
     logger.infof("ENV: QUARKUS_DATASOURCE_USERNAME = %s", System.getenv("QUARKUS_DATASOURCE_USERNAME"));
@@ -35,7 +33,6 @@ public class StartupLogger {
       logger.infof("ENV: QUARKUS_DATASOURCE_PASSWORD = not-set");
     }
 
-    // Try to read from config
     try {
       String profile = ConfigProvider.getConfig().getOptionalValue("quarkus.profile", String.class).orElse("unknown");
       String url = ConfigProvider.getConfig().getOptionalValue("quarkus.datasource.jdbc.url", String.class).orElse("not-set");
@@ -51,7 +48,6 @@ public class StartupLogger {
     logger.infof("===========================================");
   }
 
-  // This runs after successful startup
   void onStart(@Observes StartupEvent ev) {
     logger.infof("===========================================");
     logger.infof("BeanScore API Started Successfully!");

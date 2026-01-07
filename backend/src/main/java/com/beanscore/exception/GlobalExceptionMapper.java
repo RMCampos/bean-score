@@ -57,7 +57,6 @@ public class GlobalExceptionMapper implements ExceptionMapper<Exception> {
               "Internal Server Error",
               "An unexpected error occurred",
               LocalDateTime.now());
-      // Log the full exception for debugging
       exception.printStackTrace();
     }
 

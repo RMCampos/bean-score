@@ -2,7 +2,7 @@ import type { CoffeePlace } from '../types';
 
 const DEBUG_MAPS = import.meta.env.VITE_DEBUG_MAPS === 'true';
 
-const debugLog = (...args: unknown[]) => {
+export const debugLog = (...args: unknown[]) => {
   if (DEBUG_MAPS) {
     console.log('[MAPS DEBUG]', ...args);
   }
@@ -44,7 +44,7 @@ export const calculateDistance = (
 
   debugLog('✅ Distance calculated:', distance.toFixed(2) + 'km');
 
-  return distance; // Distance in km
+  return distance;
 };
 
 const toRad = (value: number): number => {
@@ -65,7 +65,6 @@ export const openAddressInMaps = (address: string, preferredApp?: 'google' | 'ap
 
   if (isIOS) {
     if (preferredApp === 'google') {
-      // Try Google Maps app first, fallback to web
       window.location.href = `comgooglemaps://?q=${encodedAddress}`;
       // Fallback to Google Maps web if app not installed
       setTimeout(() => {
@@ -79,7 +78,6 @@ export const openAddressInMaps = (address: string, preferredApp?: 'google' | 'ap
     // Android uses geo: scheme which opens default maps app
     window.location.href = `geo:0,0?q=${encodedAddress}`;
   } else {
-    // Desktop - open Google Maps web
     window.open(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`, '_blank');
   }
 };

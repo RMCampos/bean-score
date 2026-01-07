@@ -10,8 +10,8 @@ export interface CoffeePlace {
   name: string;
   address: string;
   instagramHandle: string;
-  coffeeQuality: number; // 1-5 stars
-  ambient: number; // 1-5 stars
+  coffeeQuality: number;
+  ambient: number;
   hasGlutenFree: boolean;
   hasVegMilk: boolean;
   hasVeganFood: boolean;

@@ -29,7 +29,6 @@ public class JwtService {
   public UUID getCurrentUserId() {
     UUID userId = UUID.fromString(jwt.getSubject());
 
-    // Verify user still exists (prevents deleted users from using old tokens)
     if (userRepository.findByIdOptional(userId).isEmpty()) {
       throw new NotAuthorizedException("User account no longer exists");
     }

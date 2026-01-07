@@ -18,7 +18,7 @@ public class User extends PanacheEntityBase {
   public String name;
 
   @Column(nullable = false)
-  public String password; // BCrypt hash
+  public String password;
 
   @Column(name = "created_at", nullable = false, updatable = false)
   public LocalDateTime createdAt;

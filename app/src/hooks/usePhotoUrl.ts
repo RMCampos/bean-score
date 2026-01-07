@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 
 const TOKEN_KEY = 'bean_score_token';
 
-// In-memory cache for photo blob URLs
 const photoCache = new Map<string, { url: string; size: number }>();
 
 export const usePhotoUrl = (placeId: string | null, type: 'photo' | 'thumbnail' = 'thumbnail') => {
@@ -17,7 +16,6 @@ export const usePhotoUrl = (placeId: string | null, type: 'photo' | 'thumbnail' 
 
     const cacheKey = `${placeId}-${type}`;
 
-    // Check cache first
     if (photoCache.has(cacheKey)) {
       setPhotoUrl(photoCache.get(cacheKey)!.url);
       return;
@@ -60,7 +58,6 @@ export const usePhotoUrl = (placeId: string | null, type: 'photo' | 'thumbnail' 
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
 
-        // Cache the URL with size info
         photoCache.set(cacheKey, { url, size: blob.size });
         setPhotoUrl(url);
       } catch (err) {
@@ -77,7 +74,6 @@ export const usePhotoUrl = (placeId: string | null, type: 'photo' | 'thumbnail' 
   return { photoUrl, loading };
 };
 
-// Get cache statistics
 export const getPhotoCacheStats = () => {
   let totalSize = 0;
   let count = 0;
@@ -90,7 +86,6 @@ export const getPhotoCacheStats = () => {
   return { totalSize, count };
 };
 
-// Clear entire cache
 export const clearPhotoCache = () => {
   photoCache.forEach((value) => {
     URL.revokeObjectURL(value.url);
@@ -98,7 +93,6 @@ export const clearPhotoCache = () => {
   photoCache.clear();
 };
 
-// Clear cache for specific place
 export const clearPlacePhotoCache = (placeId: string) => {
   const thumbnailKey = `${placeId}-thumbnail`;
   const photoKey = `${placeId}-photo`;

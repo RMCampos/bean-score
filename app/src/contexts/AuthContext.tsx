@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     serverApi.logout();
-    clearPhotoCache(); // Clear photo cache on logout
+    clearPhotoCache();
     setUser(null);
   };
 

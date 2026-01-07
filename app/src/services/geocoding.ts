@@ -1,22 +1,18 @@
-// You'll need to replace this with an actual API key when deploying
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY_HERE';
 const DEBUG_MAPS = import.meta.env.VITE_DEBUG_MAPS === 'true';
 
-// Debug logger
 const debugLog = (...args: unknown[]) => {
   if (DEBUG_MAPS) {
     console.log('[MAPS DEBUG]', ...args);
   }
 };
 
-// Mask API key for logging (show first 4 and last 4 chars)
 const maskApiKey = (key: string): string => {
   if (!key || key === 'YOUR_API_KEY_HERE') return '❌ NOT SET';
   if (key.length < 12) return '⚠️ TOO SHORT';
   return `${key.substring(0, 4)}...${key.substring(key.length - 4)}`;
 };
 
-// Debug API key on load
 if (DEBUG_MAPS) {
   console.log('[MAPS DEBUG] 🔑 Google Maps API Key Check:');
   console.log('[MAPS DEBUG]   - Key from env:', maskApiKey(GOOGLE_MAPS_API_KEY));
@@ -32,7 +28,6 @@ if (DEBUG_MAPS) {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let geocoder: any = null;
 let isLoading = false;
 let loadPromise: Promise<any> | null = null;
@@ -46,7 +41,6 @@ const loadGoogleMapsScript = (): Promise<void> => {
   debugLog('📜 Loading Google Maps script...');
 
   loadPromise = new Promise<void>((resolve, reject) => {
-    // Check if already loaded
     // @ts-expect-error - google is loaded dynamically
     if (typeof google !== 'undefined' && google.maps) {
       debugLog('✅ Google Maps already loaded');
@@ -54,7 +48,6 @@ const loadGoogleMapsScript = (): Promise<void> => {
       return;
     }
 
-    // Check if script is already being loaded
     const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
     if (existingScript) {
       debugLog('📜 Found existing Google Maps script tag');
@@ -98,7 +91,6 @@ const initGeocoder = async (): Promise<any> => {
   if (geocoder) return geocoder;
 
   if (isLoading) {
-    // Wait for the current loading to complete
     await loadPromise;
     return geocoder;
   }
@@ -148,7 +140,6 @@ export const geocodeAddress = async (
         } else {
           console.error('[GEOCODING] ❌ Failed:', status);
 
-          // Detailed error messages
           if (status === 'REQUEST_DENIED') {
             console.error('[GEOCODING] API key is invalid or request was denied');
             console.error('[GEOCODING] Check your Google Cloud Console:');

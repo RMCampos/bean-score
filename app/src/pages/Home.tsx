@@ -1,42 +1,13 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Navigation } from '../components/Navigation';
-import { StarRating } from '../components/StarRating';
-import { Modal } from '../components/Modal';
 import { useAuth } from '../contexts/AuthContext';
 import { serverApi } from '../services/serverApi';
 import { getCurrentPosition } from '../services/geocoding';
 import type { CoffeePlace, SearchFilters } from '../types';
-import { getPlaceScore, calculateDistance, formatDistance, openAddressInMaps, isOnline } from '../utils/helpers';
-import { usePhotoUrl } from '../hooks/usePhotoUrl';
-
-const DEBUG_MAPS = import.meta.env.VITE_DEBUG_MAPS === 'true';
-
-const debugLog = (...args: unknown[]) => {
-  if (DEBUG_MAPS) {
-    console.log('[MAPS DEBUG]', ...args);
-  }
-};
-
-const FullPhotoModal = ({ placeId, onClose }: { placeId: string; onClose: () => void }) => {
-  const { photoUrl, loading } = usePhotoUrl(placeId, 'photo');
-
-  return (
-    <Modal isOpen={true} onClose={onClose}>
-      {loading ? (
-        <div className="text-white text-center p-8">Loading full photo...</div>
-      ) : photoUrl ? (
-        <img
-          src={photoUrl}
-          alt="Full size"
-          className="max-w-full max-h-[90vh] rounded"
-        />
-      ) : (
-        <div className="text-white text-center p-8">Failed to load photo</div>
-      )}
-    </Modal>
-  );
-};
+import { calculateDistance, debugLog, isOnline } from '../utils/helpers';
+import { PlaceCard } from '../components/PlaceCard';
+import { FullPhotoModal } from '../components/FullPhotoModal';
 
 export const Home = () => {
   const { user } = useAuth();
@@ -94,7 +65,6 @@ export const Home = () => {
 
   const filteredPlaces = useMemo(() => {
     return places.filter((place) => {
-      // Text search
       if (filters.searchTerm) {
         const searchLower = filters.searchTerm.toLowerCase();
         const matchesText =
@@ -103,7 +73,6 @@ export const Home = () => {
         if (!matchesText) return false;
       }
 
-      // Attribute filters (AND logic)
       if (filters.hasGlutenFree && !place.hasGlutenFree) return false;
       if (filters.hasVegMilk && !place.hasVegMilk) return false;
       if (filters.hasVeganFood && !place.hasVeganFood) return false;
@@ -155,150 +124,8 @@ export const Home = () => {
     }
 
     debugLog('⚠️ Not sorting by distance - returning natural order');
-    // When offline or no location, return unsorted (natural order)
     return filteredPlaces;
   }, [filteredPlaces, userLocation]);
-
-  const PlaceThumbnail = ({ placeId, placeName, onClick }: { placeId: string; placeName: string; onClick: () => void }) => {
-    const { photoUrl, loading } = usePhotoUrl(placeId, 'thumbnail');
-
-    if (loading) {
-      return (
-        <div className="mb-3 -mx-4 -mt-4 w-full h-48 bg-gray-700 rounded-t-lg flex items-center justify-center">
-          <div className="text-gray-400 text-sm">Loading...</div>
-        </div>
-      );
-    }
-
-    if (!photoUrl) {
-      return null;
-    }
-
-    return (
-      <div className="mb-3 -mx-4 -mt-4">
-        <img
-          src={photoUrl}
-          alt={placeName}
-          className="w-full h-48 object-cover rounded-t-lg cursor-pointer hover:opacity-90 transition-opacity"
-          onClick={onClick}
-        />
-      </div>
-    );
-  };
-
-  const PlaceCard = ({ place }: { place: CoffeePlace }) => {
-    const score = getPlaceScore(place);
-
-    debugLog('🏪 Rendering PlaceCard:', {
-      name: place.name,
-      hasCoordinates: !!(place.latitude && place.longitude),
-      coordinates: place.latitude && place.longitude ? { lat: place.latitude, lng: place.longitude } : null,
-      userLocation,
-      isOnline: isOnline(),
-    });
-
-    const distance =
-      userLocation && isOnline() && place.latitude && place.longitude
-        ? calculateDistance(userLocation.lat, userLocation.lng, place.latitude, place.longitude)
-        : null;
-
-    debugLog('📊 Distance result for', place.name, ':', distance ? distance.toFixed(2) + 'km' : 'null');
-
-    const handleOpenMaps = () => {
-      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-      if (isIOS) {
-        // Show choice for iOS users
-        const choice = window.confirm(
-          'Open in Google Maps?\n\nOK = Google Maps\nCancel = Apple Maps'
-        );
-        openAddressInMaps(place.address, choice ? 'google' : 'apple');
-      } else {
-        openAddressInMaps(place.address);
-      }
-    };
-
-    return (
-      <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-emerald-500 transition-colors">
-        {place.hasPhoto && (
-          <PlaceThumbnail
-            placeId={place.id}
-            placeName={place.name}
-            onClick={() => setSelectedPhoto(place.id)}
-          />
-        )}
-
-        <div className="flex justify-between items-start mb-3">
-          <div>
-            <h3 className="text-lg font-semibold text-white">{place.name}</h3>
-            <button
-              onClick={handleOpenMaps}
-              className="text-sm text-gray-400 hover:text-emerald-400 transition-colors text-left"
-            >
-              {place.address}
-            </button>
-            {place.instagramHandle && (
-              <a
-                href={`https://instagram.com/${place.instagramHandle}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
-              >
-                @{place.instagramHandle}
-              </a>
-            )}
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-emerald-400">{score.toFixed(1)}</div>
-            {distance !== null && (
-              <div className="text-xs text-gray-400">{formatDistance(distance)}</div>
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 mb-3">
-          <div>
-            <StarRating value={place.coffeeQuality} readonly label="Coffee" />
-          </div>
-          <div>
-            <StarRating value={place.ambient} readonly label="Ambient" />
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2 mb-3">
-          {place.hasGlutenFree && (
-            <span className="px-2 py-1 bg-emerald-900 text-emerald-300 text-xs rounded">
-              Gluten-free
-            </span>
-          )}
-          {place.hasVegMilk && (
-            <span className="px-2 py-1 bg-emerald-900 text-emerald-300 text-xs rounded">
-              Veg milk
-            </span>
-          )}
-          {place.hasVeganFood && (
-            <span className="px-2 py-1 bg-emerald-900 text-emerald-300 text-xs rounded">
-              Vegan food
-            </span>
-          )}
-          {place.hasSugarFree && (
-            <span className="px-2 py-1 bg-emerald-900 text-emerald-300 text-xs rounded">
-              Sugar-free
-            </span>
-          )}
-        </div>
-
-        <div className="flex gap-2">
-          <Link
-            to={`/edit-place/${place.id}`}
-            className="flex-1 text-center px-3 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors text-sm"
-          >
-            Edit
-          </Link>
-        </div>
-      </div>
-    );
-  };
 
   if (loading) {
     return (
@@ -398,7 +225,12 @@ export const Home = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {sortedPlaces.map((place) => (
-                    <PlaceCard key={place.id} place={place} />
+                    <PlaceCard
+                      key={place.id}
+                      place={place}
+                      userLocation={userLocation}
+                      setSelectedPhoto={setSelectedPhoto}
+                    />
                   ))}
                 </div>
               )}

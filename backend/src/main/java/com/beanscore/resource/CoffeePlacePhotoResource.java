@@ -38,7 +38,6 @@ public class CoffeePlacePhotoResource {
       byte[] photoBytes = upload.photo.readAllBytes();
       byte[] thumbnailBytes = upload.thumbnail.readAllBytes();
 
-      // Validate file sizes
       if (photoBytes.length > 2 * 1024 * 1024) {
         return Response.status(Response.Status.BAD_REQUEST)
             .entity("Photo file size must be less than 2MB")
@@ -50,7 +49,6 @@ public class CoffeePlacePhotoResource {
             .build();
       }
 
-      // Validate content type
       if (!upload.contentType.equals("image/jpeg") && !upload.contentType.equals("image/png")) {
         return Response.status(Response.Status.BAD_REQUEST)
             .entity("Only JPEG and PNG images are allowed")
