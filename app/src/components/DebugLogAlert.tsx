@@ -10,6 +10,15 @@ interface DebugLogAlertProps {
   onDismiss: () => void;
 }
 
+const formatTime = (date: Date) => {
+  return date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+};
+
 export const DebugLogAlert = ({ logs, onDismiss }: DebugLogAlertProps) => {
   const logContainerRef = useRef<HTMLDivElement>(null);
 
@@ -23,15 +32,6 @@ export const DebugLogAlert = ({ logs, onDismiss }: DebugLogAlertProps) => {
   if (logs.length === 0) {
     return null;
   }
-
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false,
-    });
-  };
 
   return (
     <div className="bg-blue-900/50 border border-blue-500 rounded-lg p-4 mb-4">
