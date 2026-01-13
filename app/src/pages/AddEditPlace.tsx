@@ -187,6 +187,20 @@ export const AddEditPlace = () => {
     }
   };
 
+  const geocodeWithTimeout = async (address: string, timeoutMs: number = 30000): Promise<{ lat: number; lng: number } | null> => {
+    if (debugMode) addLog(`Geocoding address with ${timeoutMs / 1000}s timeout: ${address}`);
+    
+    return Promise.race([
+      geocodeAddress(address),
+      new Promise<null>((resolve) => {
+        setTimeout(() => {
+          if (debugMode) addLog(`Geocoding timeout after ${timeoutMs / 1000}s`);
+          resolve(null);
+        }, timeoutMs);
+      })
+    ]);
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
@@ -208,7 +222,7 @@ export const AddEditPlace = () => {
         let updatedFormData = { ...formData };
         if (isOnline() && !formData.latitude && !formData.longitude) {
           if (debugMode) addLog('Geocoding address...');
-          const coords = await geocodeAddress(formData.address);
+          const coords = await geocodeWithTimeout(formData.address);
           if (coords) {
             if (debugMode) addLog(`Coordinates: ${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`);
             updatedFormData = {
@@ -217,7 +231,7 @@ export const AddEditPlace = () => {
               longitude: coords.lng,
             };
           } else {
-            if (debugMode) addLog('Geocoding failed, proceeding without coordinates');
+            if (debugMode) addLog('Geocoding failed or timed out, proceeding without coordinates');
           }
         }
         await serverApi.updatePlace(id, updatedFormData);
@@ -227,7 +241,7 @@ export const AddEditPlace = () => {
         let newFormData = { ...formData };
         if (isOnline() && !formData.latitude && !formData.longitude) {
           if (debugMode) addLog('Geocoding address...');
-          const coords = await geocodeAddress(formData.address);
+          const coords = await geocodeWithTimeout(formData.address);
           if (coords) {
             if (debugMode) addLog(`Coordinates: ${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`);
             newFormData = {
@@ -236,7 +250,7 @@ export const AddEditPlace = () => {
               longitude: coords.lng,
             };
           } else {
-            if (debugMode) addLog('Geocoding failed, proceeding without coordinates');
+            if (debugMode) addLog('Geocoding failed or timed out, proceeding without coordinates');
           }
         }
 
