@@ -8,6 +8,8 @@ import type { CoffeePlace, SearchFilters } from '../types';
 import { calculateDistance, debugLog, isOnline } from '../utils/helpers';
 import { PlaceCard } from '../components/PlaceCard';
 import { FullPhotoModal } from '../components/FullPhotoModal';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '../components/PullToRefreshIndicator';
 
 export const Home = () => {
   const { user } = useAuth();
@@ -37,12 +39,7 @@ export const Home = () => {
     }
   }, [user]);
 
-  useEffect(() => {
-    loadPlaces();
-    requestLocation();
-  }, [user, loadPlaces]);
-
-  const requestLocation = async () => {
+  const requestLocation = useCallback(async () => {
     debugLog('🌍 requestLocation called');
     debugLog('Online status:', isOnline());
 
@@ -62,7 +59,23 @@ export const Home = () => {
     } else {
       debugLog('❌ No position returned from getCurrentPosition');
     }
-  };
+  }, []);
+
+  const handleRefresh = useCallback(async () => {
+    await loadPlaces();
+    await requestLocation();
+  }, [loadPlaces, requestLocation]);
+
+  const { pullDistance, isRefreshing } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    threshold: 80,
+    enabled: true,
+  });
+
+  useEffect(() => {
+    loadPlaces();
+    requestLocation();
+  }, [user, loadPlaces, requestLocation]);
 
   const filteredPlaces = useMemo(() => {
     return places.filter((place) => {
@@ -133,6 +146,11 @@ export const Home = () => {
   if (loading) {
     return (
       <>
+        <PullToRefreshIndicator
+          pullDistance={pullDistance}
+          isRefreshing={isRefreshing}
+          threshold={80}
+        />
         <Navigation />
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-emerald-400 text-xl">Loading...</div>
@@ -143,6 +161,11 @@ export const Home = () => {
 
   return (
     <>
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        isRefreshing={isRefreshing}
+        threshold={80}
+      />
       <Navigation />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search Panel */}
