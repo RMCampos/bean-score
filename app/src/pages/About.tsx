@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navigation } from '../components/Navigation';
 import { useAuth } from '../contexts/AuthContext';
+import { useDebug } from '../contexts/DebugContext';
 import { serverApi } from '../services/serverApi';
 import { getPhotoCacheStats, clearPhotoCache } from '../hooks/usePhotoUrl';
 
 export const About = () => {
   const { user, logout } = useAuth();
+  const { debugMode, toggleDebugMode } = useDebug();
   const navigate = useNavigate();
   const [deleting, setDeleting] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -99,6 +101,40 @@ export const About = () => {
               <strong className="text-white">Email:</strong> {user?.email}
             </p>
           </div>
+        </div>
+
+        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
+          <h2 className="text-xl font-semibold text-white mb-4">Developer Options</h2>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-300 font-medium">Debug Mode</p>
+              <p className="text-sm text-gray-400 mt-1">
+                Enable detailed logging in Add/Edit pages to troubleshoot issues
+              </p>
+            </div>
+            <button
+              onClick={toggleDebugMode}
+              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-gray-800 ${
+                debugMode ? 'bg-emerald-600' : 'bg-gray-600'
+              }`}
+              role="switch"
+              aria-checked={debugMode}
+              aria-label="Toggle debug mode"
+            >
+              <span
+                className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                  debugMode ? 'translate-x-7' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+          {debugMode && (
+            <div className="mt-4 bg-blue-900/20 border border-blue-500 rounded p-3">
+              <p className="text-blue-300 text-sm">
+                ✓ Debug mode is enabled. You'll see detailed logs when adding or editing coffee places.
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">

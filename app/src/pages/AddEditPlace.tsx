@@ -4,6 +4,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import imageCompression from 'browser-image-compression';
 import { Navigation } from '../components/Navigation';
 import { StarRating } from '../components/StarRating';
+import { DebugLogAlert } from '../components/DebugLogAlert';
+import { useDebug } from '../contexts/DebugContext';
 import { serverApi } from '../services/serverApi';
 import { geocodeAddress, getCurrentPosition, reverseGeocode } from '../services/geocoding';
 import type { CoffeePlaceFormData } from '../types';
@@ -13,6 +15,7 @@ import { usePhotoUrl, clearPlacePhotoCache } from '../hooks/usePhotoUrl';
 export const AddEditPlace = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { debugMode, logs, addLog, clearLogs } = useDebug();
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
@@ -34,6 +37,14 @@ export const AddEditPlace = () => {
   const [fetchingLocation, setFetchingLocation] = useState(false);
   const { photoUrl: existingPhotoUrl } = usePhotoUrl(hasExistingPhoto && id ? id : null, 'thumbnail');
 
+  // Clear logs when component mounts
+  useEffect(() => {
+    clearLogs();
+    if (debugMode) {
+      addLog(id ? `Editing place with ID: ${id}` : 'Adding new place');
+    }
+  }, [id, debugMode, clearLogs, addLog]);
+
   useEffect(() => {
     if (id) {
       loadPlace();
@@ -50,9 +61,11 @@ export const AddEditPlace = () => {
   const loadPlace = async () => {
     if (!id) return;
 
+    if (debugMode) addLog('Loading place data...');
     try {
       const place = await serverApi.getPlace(id);
       if (place) {
+        if (debugMode) addLog(`Place loaded: ${place.name}`);
         setFormData({
           name: place.name,
           address: place.address,
@@ -67,10 +80,12 @@ export const AddEditPlace = () => {
 
         if (place.hasPhoto) {
           setHasExistingPhoto(true);
+          if (debugMode) addLog('Place has existing photo');
         }
       }
     } catch (error) {
       console.error('Failed to load place:', error);
+      if (debugMode) addLog(`Error loading place: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setError('Failed to load place');
     }
   };
@@ -79,25 +94,30 @@ export const AddEditPlace = () => {
     // Allow larger files since they will be resized before upload
     if (file.size > 10 * 1024 * 1024) {
       setError('Photo size must be under 10MB');
+      if (debugMode) addLog(`Photo rejected: size ${(file.size / 1024 / 1024).toFixed(2)}MB exceeds 10MB limit`);
       return;
     }
 
     if (!file.type.match(/^image\/(jpeg|png)$/)) {
       setError('Only JPEG and PNG images are allowed');
+      if (debugMode) addLog(`Photo rejected: invalid type ${file.type}`);
       return;
     }
 
     setProcessingPhoto(true);
     setError('');
+    if (debugMode) addLog(`Processing photo: ${file.name} (${(file.size / 1024).toFixed(2)}KB)`);
 
     try {
       setPhotoFile(file);
       const preview = URL.createObjectURL(file);
       setPhotoPreview(preview);
       setHasExistingPhoto(false);
+      if (debugMode) addLog('Photo preview created successfully');
     } catch (err) {
       setError('Failed to process photo');
       console.error('Photo processing error:', err);
+      if (debugMode) addLog(`Photo processing error: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setProcessingPhoto(false);
     }
@@ -106,41 +126,52 @@ export const AddEditPlace = () => {
   const handleDeletePhoto = async () => {
     if (!id || !confirm('Delete this photo?')) return;
 
+    if (debugMode) addLog('Deleting photo...');
     try {
       await serverApi.deletePhoto(id);
       clearPlacePhotoCache(id); // Clear cache after deleting
       setPhotoPreview(null);
       setHasExistingPhoto(false);
       setPhotoFile(null);
+      if (debugMode) addLog('Photo deleted successfully');
     } catch (err) {
       setError('Failed to delete photo');
+      if (debugMode) addLog(`Failed to delete photo: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
 
   const handleGetCurrentLocation = async () => {
     if (!isOnline()) {
       setError('You need to be online to get your current location');
+      if (debugMode) addLog('Cannot get location: offline');
       return;
     }
 
     setFetchingLocation(true);
     setError('');
+    if (debugMode) addLog('Requesting current location...');
 
     try {
       const position = await getCurrentPosition();
       if (!position) {
         setError('Could not get your location. Please check permissions and try again.');
+        if (debugMode) addLog('Location request failed or denied');
         return;
       }
 
       const { latitude, longitude } = position.coords;
+      if (debugMode) addLog(`Location obtained: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+      
+      if (debugMode) addLog('Reverse geocoding address...');
       const address = await reverseGeocode(latitude, longitude);
 
       if (!address) {
         setError('Could not determine address from your location. Please enter manually.');
+        if (debugMode) addLog('Reverse geocoding failed');
         return;
       }
 
+      if (debugMode) addLog(`Address found: ${address}`);
       setFormData({
         ...formData,
         address,
@@ -150,6 +181,7 @@ export const AddEditPlace = () => {
     } catch (err) {
       console.error('Location fetch error:', err);
       setError('Failed to get location. Please enter address manually.');
+      if (debugMode) addLog(`Location error: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setFetchingLocation(false);
     }
@@ -161,45 +193,60 @@ export const AddEditPlace = () => {
 
     if (formData.coffeeQuality === 0 || formData.ambient === 0) {
       setError('Please rate both coffee quality and ambient');
+      if (debugMode) addLog('Validation failed: Missing ratings');
       return;
     }
 
     setLoading(true);
+    if (debugMode) addLog(`Starting ${id ? 'update' : 'create'} operation...`);
 
     try {
       let placeId = id;
 
       if (id) {
+        if (debugMode) addLog('Updating existing place...');
         let updatedFormData = { ...formData };
         if (isOnline() && !formData.latitude && !formData.longitude) {
+          if (debugMode) addLog('Geocoding address...');
           const coords = await geocodeAddress(formData.address);
           if (coords) {
+            if (debugMode) addLog(`Coordinates: ${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`);
             updatedFormData = {
               ...formData,
               latitude: coords.lat,
               longitude: coords.lng,
             };
+          } else {
+            if (debugMode) addLog('Geocoding failed, proceeding without coordinates');
           }
         }
         await serverApi.updatePlace(id, updatedFormData);
+        if (debugMode) addLog('Place updated successfully');
       } else {
+        if (debugMode) addLog('Creating new place...');
         let newFormData = { ...formData };
         if (isOnline() && !formData.latitude && !formData.longitude) {
+          if (debugMode) addLog('Geocoding address...');
           const coords = await geocodeAddress(formData.address);
           if (coords) {
+            if (debugMode) addLog(`Coordinates: ${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`);
             newFormData = {
               ...formData,
               latitude: coords.lat,
               longitude: coords.lng,
             };
+          } else {
+            if (debugMode) addLog('Geocoding failed, proceeding without coordinates');
           }
         }
 
         const newPlace = await serverApi.createPlace(newFormData);
         placeId = newPlace.id;
+        if (debugMode) addLog(`Place created with ID: ${placeId}`);
       }
 
       if (photoFile && placeId) {
+        if (debugMode) addLog('Processing photo for upload...');
         // Resize original photo (max 1200px)
         const resizedPhoto = await imageCompression(photoFile, {
           maxWidthOrHeight: 1200,
@@ -207,8 +254,10 @@ export const AddEditPlace = () => {
           fileType: photoFile.type,
           initialQuality: 0.85,
         });
+        if (debugMode) addLog(`Photo resized to ${(resizedPhoto.size / 1024).toFixed(2)}KB`);
 
         // Create thumbnail with higher quality to avoid pixelation
+        if (debugMode) addLog('Creating thumbnail...');
         const thumbnail = await imageCompression(photoFile, {
           maxWidthOrHeight: 800,
           useWebWorker: true,
@@ -216,15 +265,21 @@ export const AddEditPlace = () => {
           initialQuality: 0.95,
           alwaysKeepResolution: true,
         });
+        if (debugMode) addLog(`Thumbnail created: ${(thumbnail.size / 1024).toFixed(2)}KB`);
 
+        if (debugMode) addLog('Uploading photo...');
         await serverApi.uploadPhoto(placeId, resizedPhoto, thumbnail);
         clearPlacePhotoCache(placeId); // Clear cache so new photo loads fresh
+        if (debugMode) addLog('Photo uploaded successfully');
       }
 
+      if (debugMode) addLog('Navigating to home...');
       navigate('/home');
     } catch (err) {
       console.error('Form submission error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to save place');
+      const errorMsg = err instanceof Error ? err.message : 'Failed to save place';
+      if (debugMode) addLog(`Error: ${errorMsg}`);
+      setError(errorMsg);
       setLoading(false); // Explicitly reset loading state on error
     } finally {
       setLoading(false); // Also reset in finally to ensure it always runs
@@ -235,12 +290,16 @@ export const AddEditPlace = () => {
     if (!id || !confirm('Are you sure you want to delete this place?')) return;
 
     setDeleting(true);
+    if (debugMode) addLog('Deleting place...');
 
     try {
       await serverApi.deletePlace(id);
+      if (debugMode) addLog('Place deleted successfully');
       navigate('/home');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete place');
+      const errorMsg = err instanceof Error ? err.message : 'Failed to delete place';
+      setError(errorMsg);
+      if (debugMode) addLog(`Delete failed: ${errorMsg}`);
       setDeleting(false);
     }
   };
@@ -254,6 +313,8 @@ export const AddEditPlace = () => {
         </h1>
 
         <form onSubmit={handleSubmit} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+          {debugMode && <DebugLogAlert logs={logs} onDismiss={clearLogs} />}
+
           {error && (
             <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded mb-4">
               {error}
