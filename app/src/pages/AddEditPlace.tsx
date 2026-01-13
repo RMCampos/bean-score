@@ -154,14 +154,22 @@ export const AddEditPlace = () => {
     try {
       const position = await getCurrentPosition();
       if (!position) {
-        setError('Could not get your location. Please check permissions and try again.');
-        if (debugMode) addLog('Location request failed or denied');
+        // Check if it's likely an HTTPS issue
+        const isSecureContext = window.isSecureContext;
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+        if (!isSecureContext && !isLocalhost) {
+          setError('Location access requires HTTPS. Please access the app via https:// or localhost');
+        } else {
+          setError('Could not get your location. Please check: 1) Location permissions are enabled, 2) Location services are on, 3) Check browser console for details');
+        }
+        if (debugMode) addLog('Location request failed or denied - check console for details');
         return;
       }
 
       const { latitude, longitude } = position.coords;
       if (debugMode) addLog(`Location obtained: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
-      
+
       if (debugMode) addLog('Reverse geocoding address...');
       const address = await reverseGeocode(latitude, longitude);
 
@@ -180,7 +188,7 @@ export const AddEditPlace = () => {
       });
     } catch (err) {
       console.error('Location fetch error:', err);
-      setError('Failed to get location. Please enter address manually.');
+      setError('Failed to get location. Please check browser console for details or enter address manually.');
       if (debugMode) addLog(`Location error: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setFetchingLocation(false);

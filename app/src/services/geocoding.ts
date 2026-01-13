@@ -213,6 +213,27 @@ export const getCurrentPosition = (): Promise<GeolocationPosition | null> => {
   return new Promise((resolve) => {
     if (!navigator.geolocation) {
       debugLog('❌ Geolocation not supported by browser');
+      console.error('[GEOLOCATION] Browser does not support geolocation');
+      resolve(null);
+      return;
+    }
+
+    // Check if we're on HTTPS or localhost
+    const isSecureContext = window.isSecureContext;
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+    debugLog('🔒 Security context check:', {
+      isSecureContext,
+      isLocalhost,
+      protocol: window.location.protocol,
+      hostname: window.location.hostname,
+    });
+
+    if (!isSecureContext && !isLocalhost) {
+      console.error('[GEOLOCATION] ❌ Geolocation requires HTTPS or localhost');
+      console.error('[GEOLOCATION] Current URL:', window.location.href);
+      console.error('[GEOLOCATION] Please access the app via HTTPS or localhost');
+      debugLog('❌ Insecure context - geolocation blocked');
       resolve(null);
       return;
     }
@@ -233,16 +254,38 @@ export const getCurrentPosition = (): Promise<GeolocationPosition | null> => {
         resolve(position);
       },
       (error) => {
+        const errorName = {
+          1: 'PERMISSION_DENIED',
+          2: 'POSITION_UNAVAILABLE',
+          3: 'TIMEOUT',
+        }[error.code] || 'UNKNOWN';
+
         debugLog('❌ Geolocation error:', {
           code: error.code,
+          name: errorName,
           message: error.message,
-          codes: {
-            1: 'PERMISSION_DENIED',
-            2: 'POSITION_UNAVAILABLE',
-            3: 'TIMEOUT',
-          }[error.code],
         });
-        console.error('Geolocation error:', error.code, error.message);
+
+        console.error('[GEOLOCATION] ❌ Error:', errorName, '(code:', error.code + ')');
+        console.error('[GEOLOCATION] Message:', error.message);
+
+        // Provide specific troubleshooting advice based on error code
+        if (error.code === 1) {
+          console.error('[GEOLOCATION] 🔒 Location permission denied by user');
+          console.error('[GEOLOCATION] Please enable location access in your browser settings');
+        } else if (error.code === 2) {
+          console.error('[GEOLOCATION] 📍 Location unavailable - possible causes:');
+          console.error('[GEOLOCATION]   1. Device location services are disabled');
+          console.error('[GEOLOCATION]   2. Browser cannot determine location (no GPS/WiFi/cell data)');
+          console.error('[GEOLOCATION]   3. Using HTTP instead of HTTPS (check URL)');
+          console.error('[GEOLOCATION]   4. VPN or network blocking location services');
+          console.error('[GEOLOCATION] Current protocol:', window.location.protocol);
+          console.error('[GEOLOCATION] Try: Enable location services or use HTTPS');
+        } else if (error.code === 3) {
+          console.error('[GEOLOCATION] ⏱️ Location request timed out after 30 seconds');
+          console.error('[GEOLOCATION] Try again or check your device location settings');
+        }
+
         resolve(null);
       },
       {
