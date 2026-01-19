@@ -20,6 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      packages: write
 
     steps:
       - name: Checkout code
@@ -38,17 +39,18 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata for Docker
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKER_USERNAME }}/bean-score
+          images: ghcr.io/rmcampos/bean-score/app
           tags: |
             type=raw,value=${{ steps.version.outputs.tag }}
             type=raw,value=app-latest,enable={{is_default_branch}}
@@ -74,16 +76,19 @@ jobs:
           git tag -a ${{ steps.version.outputs.tag }} -m "Release ${{ steps.version.outputs.tag }}"
           git push origin ${{ steps.version.outputs.tag }}
 
+      - name: Trigger Dokploy deployment
+        run: curl -X POST "${{ vars.DOKPLOY_WEBHOOK_APP }}"
+
       - name: Generate build summary
         run: |
           echo "## :rocket: App Build & Deploy Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Docker Images Published" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Tag | Docker Hub Link |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tag | GitHub Container Registry Link |" >> $GITHUB_STEP_SUMMARY
           echo "|-----|-----------------|" >> $GITHUB_STEP_SUMMARY
-          echo "| \`${{ steps.version.outputs.tag }}\` | [View on Docker Hub](https://hub.docker.com/r/rmcampos/bean-score/tags?name=${{ steps.version.outputs.tag }}) |" >> $GITHUB_STEP_SUMMARY
-          echo "| \`app-latest\` | [View on Docker Hub](https://hub.docker.com/r/rmcampos/bean-score/tags?name=app-latest) |" >> $GITHUB_STEP_SUMMARY
+          echo "| \`${{ steps.version.outputs.tag }}\` | [View on GitHub Container Registry](https://ghcr.io/rmcampos/bean-score/app/tags?name=${{ steps.version.outputs.tag }}) |" >> $GITHUB_STEP_SUMMARY
+          echo "| \`app-latest\` | [View on GitHub Container Registry](https://ghcr.io/rmcampos/bean-score/app/tags?name=app-latest) |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Build Information" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -96,5 +101,5 @@ jobs:
           echo "### Pull Command" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull rmcampos/bean-score:${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/rmcampos/bean-score/app:${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
