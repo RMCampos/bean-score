@@ -78,8 +78,8 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Tag | GitHub Container Registry Link |" >> $GITHUB_STEP_SUMMARY
           echo "|-----|-----------------|" >> $GITHUB_STEP_SUMMARY
-          echo "| \`${{ steps.version.outputs.tag }}\` | [View on GitHub Container Registry](https://ghcr.io/rmcampos/bean-score/backend/tags?name=${{ steps.version.outputs.tag }}) |" >> $GITHUB_STEP_SUMMARY
-          echo "| \`backend-latest\` | [View on GitHub Container Registry](https://ghcr.io/rmcampos/bean-score/backend/tags?name=backend-latest) |" >> $GITHUB_STEP_SUMMARY
+          echo "| \`${{ steps.version.outputs.tag }}\` | [View on GitHub](https://github.com/rmcampos/bean-score/pkgs/container/bean-score%2Fbackend) |" >> $GITHUB_STEP_SUMMARY
+          echo "| \`backend-latest\` | [View on GitHub](https://github.com/rmcampos/bean-score/pkgs/container/bean-score%2Fbackend) |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Build Information" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
