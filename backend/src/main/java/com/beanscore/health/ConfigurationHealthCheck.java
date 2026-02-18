@@ -21,8 +21,11 @@ public class ConfigurationHealthCheck implements HealthCheck {
 
     @Override
     public HealthCheckResponse call() {
+        String apiVersion = System.getenv("API_VERSION");
+
         return HealthCheckResponse.named("configuration")
                 .up()
+                .withData("api.version", apiVersion)
                 .withData("profile", profile)
                 .withData("datasource.username", datasourceUsername)
                 .withData("datasource.url", datasourceUrl)

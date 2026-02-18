@@ -5,6 +5,7 @@ import io.quarkus.runtime.StartupEvent;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
+import java.lang.management.ManagementFactory;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.jboss.logging.Logger;
 
@@ -49,8 +50,14 @@ public class StartupLogger {
   }
 
   void onStart(@Observes StartupEvent ev) {
+    long startTime = ManagementFactory.getRuntimeMXBean().getStartTime();
+    long now = System.currentTimeMillis();
+    
+    double durationSeconds = (now - startTime) / 1000.0;
+    String apiVersion = System.getenv("API_VERSION");
+
     logger.infof("===========================================");
-    logger.infof("BeanScore API Started Successfully!");
+    logger.infof("BeanScore API version %s Started Successfully in %.3f seconds!", apiVersion, durationSeconds);
     logger.infof("===========================================");
   }
 }

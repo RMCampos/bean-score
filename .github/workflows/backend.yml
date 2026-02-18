@@ -60,6 +60,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            BUILD=${{ steps.version.outputs.tag }}
 
       - name: Create and push Git tag
         run: |
@@ -67,9 +69,6 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag -a ${{ steps.version.outputs.tag }} -m "Release ${{ steps.version.outputs.tag }}"
           git push origin ${{ steps.version.outputs.tag }}
-
-      - name: Trigger Dokploy deployment
-        run: curl -X POST "${{ vars.DOKPLOY_WEBHOOK_BACKEND }}"
 
       - name: Generate build summary
         run: |

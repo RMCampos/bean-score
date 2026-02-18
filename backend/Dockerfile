@@ -27,6 +27,10 @@ FROM registry.access.redhat.com/ubi9/ubi-minimal:9.3
 
 WORKDIR /work/
 
+# API version from Env
+ARG BUILD
+ENV API_VERSION=${BUILD}
+
 # Install curl for healthchecks
 USER root
 RUN microdnf install -y curl-minimal && microdnf clean all
@@ -45,4 +49,4 @@ EXPOSE 8080
 ENV QUARKUS_PROFILE=prod
 
 # Run the native application
-CMD ["./application", "-Dquarkus.http.host=0.0.0.0"]
+CMD ["./application", "-Dquarkus.http.host=0.0.0.0", "-Dapi.version=${API_VERSION}"]
