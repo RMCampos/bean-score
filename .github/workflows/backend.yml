@@ -8,6 +8,7 @@ on:
     paths:
       - 'backend/**/*.java'
       - 'backend/**/*.xml'
+      - 'backend/**/*.properties'
       - 'backend/Dockerfile'
 
 jobs:
