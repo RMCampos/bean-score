@@ -1,6 +1,5 @@
 package com.beanscore.service;
 
-import com.beanscore.entity.CoffeePlace;
 import com.beanscore.entity.User;
 import com.beanscore.repository.CoffeePlaceRepository;
 import com.beanscore.repository.UserRepository;
@@ -8,7 +7,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
-import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -35,13 +33,8 @@ public class UserService {
 
     logger.info("Deleting user with ID: " + currentUserId);
 
-    List<CoffeePlace> coffeePlaces = coffeePlaceRepository.findByUserId(currentUserId);
-    logger.info("Found " + coffeePlaces.size() + " coffee places associated with user");
-
-    if (!coffeePlaces.isEmpty()) {
-      long deletedCount = coffeePlaceRepository.deleteByUserId(currentUserId);
-      logger.info("Deleted " + deletedCount + " coffee places associated with user");
-    }
+    coffeePlaceRepository.deleteByUserId(currentUserId);
+    logger.info("Deleted coffee places associated with user ID: " + currentUserId);
 
     userRepository.delete(user);
     logger.info("Deleted user with ID: " + currentUserId);
