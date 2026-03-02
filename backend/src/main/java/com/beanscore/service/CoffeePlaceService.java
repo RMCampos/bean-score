@@ -207,7 +207,7 @@ public class CoffeePlaceService {
             coffeePlace.hasSugarFree,
             coffeePlace.latitude,
             coffeePlace.longitude,
-            coffeePlace.photo != null);
+            coffeePlace.photoContentType != null);
     return response;
   }
 }
