@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Navigation } from '../components/Navigation';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { serverApi } from '../services/serverApi';
 import { getCurrentPosition } from '../services/geocoding';
 import type { CoffeePlace, SearchFilters } from '../types';

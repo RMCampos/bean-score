@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import imageCompression from 'browser-image-compression';
 import { Navigation } from '../components/Navigation';
 import { StarRating } from '../components/StarRating';
 import { DebugLogAlert } from '../components/DebugLogAlert';
-import { useDebug } from '../contexts/DebugContext';
+import { useDebug } from '../hooks/useDebug';
 import { serverApi } from '../services/serverApi';
 import { geocodeAddress, getCurrentPosition, reverseGeocode } from '../services/geocoding';
 import type { CoffeePlaceFormData } from '../types';
@@ -45,20 +45,7 @@ export const AddEditPlace = () => {
     }
   }, [id, debugMode, clearLogs, addLog]);
 
-  useEffect(() => {
-    if (id) {
-      loadPlace();
-    }
-  }, [id]);
-
-  // Update preview when existing photo loads
-  useEffect(() => {
-    if (hasExistingPhoto && existingPhotoUrl && !photoFile) {
-      setPhotoPreview(existingPhotoUrl);
-    }
-  }, [hasExistingPhoto, existingPhotoUrl, photoFile]);
-
-  const loadPlace = async () => {
+  const loadPlace = useCallback(async () => {
     if (!id) return;
 
     if (debugMode) addLog('Loading place data...');
@@ -88,7 +75,20 @@ export const AddEditPlace = () => {
       if (debugMode) addLog(`Error loading place: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setError('Failed to load place');
     }
-  };
+  }, [id, debugMode, addLog]);
+
+  useEffect(() => {
+    if (id) {
+      loadPlace();
+    }
+  }, [id, loadPlace]);
+
+  // Update preview when existing photo loads
+  useEffect(() => {
+    if (hasExistingPhoto && existingPhotoUrl && !photoFile) {
+      setPhotoPreview(existingPhotoUrl);
+    }
+  }, [hasExistingPhoto, existingPhotoUrl, photoFile]);
 
   const handlePhotoSelect = async (file: File) => {
     // Allow larger files since they will be resized before upload

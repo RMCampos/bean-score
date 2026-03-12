@@ -28,9 +28,9 @@ if (DEBUG_MAPS) {
   }
 }
 
-let geocoder: any = null;
+let geocoder: google.maps.Geocoder | null = null;
 let isLoading = false;
-let loadPromise: Promise<any> | null = null;
+let loadPromise: Promise<void> | null = null;
 
 const loadGoogleMapsScript = (): Promise<void> => {
   if (loadPromise) {
@@ -41,7 +41,6 @@ const loadGoogleMapsScript = (): Promise<void> => {
   debugLog('📜 Loading Google Maps script...');
 
   loadPromise = new Promise<void>((resolve, reject) => {
-    // @ts-expect-error - google is loaded dynamically
     if (typeof google !== 'undefined' && google.maps) {
       debugLog('✅ Google Maps already loaded');
       resolve(undefined);
@@ -87,11 +86,12 @@ const loadGoogleMapsScript = (): Promise<void> => {
   return loadPromise;
 };
 
-const initGeocoder = async (): Promise<any> => {
+const initGeocoder = async (): Promise<google.maps.Geocoder> => {
   if (geocoder) return geocoder;
 
   if (isLoading) {
     await loadPromise;
+    if (!geocoder) throw new Error('Geocoder failed to initialize');
     return geocoder;
   }
 
@@ -99,12 +99,10 @@ const initGeocoder = async (): Promise<any> => {
     isLoading = true;
     await loadGoogleMapsScript();
 
-    // @ts-expect-error - google is loaded dynamically
     if (typeof google === 'undefined' || !google.maps) {
       throw new Error('Google Maps failed to load');
     }
 
-    // @ts-expect-error - google is loaded dynamically
     geocoder = new google.maps.Geocoder();
     isLoading = false;
     return geocoder;
@@ -125,8 +123,7 @@ export const geocodeAddress = async (
     debugLog('✅ Geocoder initialized');
 
     return new Promise((resolve) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      geocoderInstance.geocode({ address }, (results: any, status: any) => {
+      geocoderInstance.geocode({ address }, (results, status) => {
         debugLog('📍 Geocoding result:', { status, resultsCount: results?.length || 0 });
 
         if (status === 'OK' && results && results[0]) {
@@ -174,11 +171,9 @@ export const reverseGeocode = async (
     debugLog('✅ Geocoder initialized for reverse geocoding');
 
     return new Promise((resolve) => {
-      // @ts-expect-error - google is loaded dynamically
       const latLng = new google.maps.LatLng(lat, lng);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      geocoderInstance.geocode({ location: latLng }, (results: any, status: any) => {
+      geocoderInstance.geocode({ location: latLng }, (results, status) => {
         debugLog('📍 Reverse geocoding result:', { status, resultsCount: results?.length || 0 });
 
         if (status === 'OK' && results && results[0]) {

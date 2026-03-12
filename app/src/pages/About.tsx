@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navigation } from '../components/Navigation';
-import { useAuth } from '../contexts/AuthContext';
-import { useDebug } from '../contexts/DebugContext';
+import { useAuth } from '../hooks/useAuth';
+import { useDebug } from '../hooks/useDebug';
 import { serverApi } from '../services/serverApi';
 import { getPhotoCacheStats, clearPhotoCache } from '../hooks/usePhotoUrl';
 
