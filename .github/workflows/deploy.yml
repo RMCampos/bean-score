@@ -14,7 +14,7 @@ on:
         required: false
         default: "true"
   workflow_run:
-    workflows: [ "Backend Main", "Frontend Main" ]
+    workflows: [ "Build and Push Backend", "Build and Push App" ]
     types: [ completed ]
 
 jobs:
