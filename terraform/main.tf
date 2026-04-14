@@ -48,6 +48,16 @@ variable "debug_maps" {
   default = true
 }
 
+variable "backend_image" {
+  type    = string
+  default = "ghcr.io/rmcampos/bean-score/backend:latest"
+}
+
+variable "frontend_image" {
+  type    = string
+  default = "ghcr.io/rmcampos/bean-score/app:latest"
+}
+
 resource "kubernetes_namespace_v1" "bean_score" {
   metadata {
     name = "bean-score"
@@ -188,7 +198,7 @@ resource "kubernetes_deployment_v1" "bean_score_backend" {
       metadata { labels = { app = "bean-score-backend" } }
       spec {
         container {
-          image = "ghcr.io/rmcampos/bean-score/backend:backend-v2026.03.12.13"
+          image = var.backend_image
           name  = "backend"
           env {
             name  = "QUARKUS_PROFILE"
@@ -252,7 +262,7 @@ resource "kubernetes_deployment_v1" "bean_score_frontend" {
       metadata { labels = { app = "bean-score-app" } }
       spec {
         container {
-          image = "ghcr.io/rmcampos/bean-score/app:app-v2026.03.23.21"
+          image = var.frontend_image
           name  = "frontend"
           port { container_port = 80 }
           env {
