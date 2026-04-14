@@ -10,7 +10,7 @@ LATEST_COMPILER_PLUGIN_VERSION=$(
 )
 
 # Get current version from pom.xml, reading from the `compiler-plugin.version` property
-CURRENT_COMPILER_PLUGIN_VERSION=$(cd backend && mvn help:evaluate -Dexpression=compiler-plugin.version -q -DforceStdout)
+CURRENT_COMPILER_PLUGIN_VERSION=$(cd backend && ./mvnw help:evaluate -Dexpression=compiler-plugin.version -q -DforceStdout)
 
 if [ "$LATEST_COMPILER_PLUGIN_VERSION" != "$CURRENT_COMPILER_PLUGIN_VERSION" ]; then
     echo "The maven-compiler-plugin is outdated. Current version: $CURRENT_COMPILER_PLUGIN_VERSION, Latest version: $LATEST_COMPILER_PLUGIN_VERSION"
@@ -29,7 +29,7 @@ LATEST_SUREFIRE_PLUGIN_VERSION=$(
 )
 
 # Get current version from pom.xml, reading from the `surefire-plugin.version` property
-CURRENT_SUREFIRE_PLUGIN_VERSION=$(cd backend && mvn help:evaluate -Dexpression=surefire-plugin.version -q -DforceStdout)
+CURRENT_SUREFIRE_PLUGIN_VERSION=$(cd backend && ./mvnw help:evaluate -Dexpression=surefire-plugin.version -q -DforceStdout)
 if [ "$LATEST_SUREFIRE_PLUGIN_VERSION" != "$CURRENT_SUREFIRE_PLUGIN_VERSION" ]; then
     echo "The maven-surefire-plugin is outdated. Current version: $CURRENT_SUREFIRE_PLUGIN_VERSION, Latest version: $LATEST_SUREFIRE_PLUGIN_VERSION"
     exit 1
@@ -47,7 +47,7 @@ LATEST_QUARKUS_PLUGIN_VERSION=$(
 )
 
 # Get current version from pom.xml, reading from the `quarkus.platform.version` property
-CURRENT_QUARKUS_PLUGIN_VERSION=$(cd backend && mvn help:evaluate -Dexpression=quarkus.platform.version -q -DforceStdout)
+CURRENT_QUARKUS_PLUGIN_VERSION=$(cd backend && ./mvnw help:evaluate -Dexpression=quarkus.platform.version -q -DforceStdout)
 if [ "$LATEST_QUARKUS_PLUGIN_VERSION" != "$CURRENT_QUARKUS_PLUGIN_VERSION" ]; then
     echo "The quarkus-maven-plugin is outdated. Current version: $CURRENT_QUARKUS_PLUGIN_VERSION, Latest version: $LATEST_QUARKUS_PLUGIN_VERSION"
     exit 1
