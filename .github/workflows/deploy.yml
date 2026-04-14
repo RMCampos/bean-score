@@ -1,0 +1,171 @@
+name: Deploy to prod
+
+on:
+  workflow_dispatch:
+    inputs:
+      backend_image:
+        description: "Backend image tag (full image reference)"
+        required: false
+      frontend_image:
+        description: "Frontend image tag (full image reference)"
+        required: false
+      apply:
+        description: "Apply changes after plan"
+        required: false
+        default: "true"
+  workflow_run:
+    workflows: [ "Backend Main", "Frontend Main" ]
+    types: [ completed ]
+
+jobs:
+  terraform-plan:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    outputs:
+      no_changes: ${{ steps.check-changes.outputs.no_changes }}
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Setup Kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_DATA }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Validate cluster access
+        run: |
+          kubectl cluster-info
+          kubectl get namespace bean-score
+
+      - name: Determine deployment values
+        id: deploy-vars
+        run: |
+          backend_image="${{ github.event.inputs.backend_image }}"
+          frontend_image="${{ github.event.inputs.frontend_image }}"
+
+          latest_backend_tag="$(git tag --list 'backend-v*' | sort -V | tail -n1)"
+          latest_frontend_tag="$(git tag --list 'app-v*' | sort -V | tail -n1)"
+
+          if [ -z "$latest_backend_tag" ]; then
+            echo "No backend tag found matching [0-9]*" >&2
+            exit 1
+          fi
+
+          if [ -z "$latest_frontend_tag" ]; then
+            echo "No frontend tag found matching app-v*" >&2
+            exit 1
+          fi
+
+          if [ -z "$backend_image" ]; then
+            backend_image="ghcr.io/rmcampos/bean-score/backend:$latest_backend_tag"
+          fi
+          if [ -z "$frontend_image" ]; then
+            frontend_image="ghcr.io/rmcampos/bean-score/app:$latest_frontend_tag"
+          fi
+
+          echo "Resolved backend_image=$backend_image"
+          echo "Resolved frontend_image=$frontend_image"
+
+          echo "backend_image=$backend_image" >> "$GITHUB_OUTPUT"
+          echo "frontend_image=$frontend_image" >> "$GITHUB_OUTPUT"
+
+      - name: Terraform Fmt -check -diff
+        working-directory: terraform
+        run: terraform fmt -check -diff
+
+      - name: Terraform Init
+        working-directory: terraform
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: terraform init -input=false
+
+      - name: Terraform Validate
+        working-directory: terraform
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: check-changes
+        working-directory: terraform
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          timeout 1m terraform plan -input=false -out=tfplan \
+            -var="db_user=${{ secrets.DB_USER }}" \
+            -var="db_password=${{ secrets.DB_PASSWORD }}" \
+            -var="db_name=${{ secrets.DB_NAME }}" \
+            -var="google_maps_api_key=${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}" \
+            -var="backend_image=${{ steps.deploy-vars.outputs.backend_image }}" \
+            -var="frontend_image=${{ steps.deploy-vars.outputs.frontend_image }}"
+          terraform show -json tfplan > tfplan.json
+          if jq -e '.resource_changes | length == 0' tfplan.json >/dev/null; then
+            echo "no_changes=true" >> "$GITHUB_OUTPUT"
+            echo "No changes to apply."
+            exit 0
+          else
+            echo "Changes detected. Proceeding with apply"
+            echo "no_changes=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: terraform/tfplan
+
+  terraform-apply:
+    runs-on: ubuntu-latest
+    needs: terraform-plan
+    if: >
+      (github.event_name == 'push' || github.event_name == 'workflow_run' || inputs.apply == 'true')
+      && needs.terraform-plan.outputs.no_changes == 'false'
+    environment:
+      name: production
+      url: https://beanscore.darkroasted.vps-kinghost.net
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Download plan artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+          path: terraform
+
+      - name: Setup Kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_DATA }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Terraform Init
+        working-directory: terraform
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: terraform init -input=false
+
+      - name: Terraform Apply
+        working-directory: terraform
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: timeout 1m terraform apply tfplan
+
